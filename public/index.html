@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Opus 4.5 Chat</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>Claude Chat</h1>
+                <span class="model-badge">Opus 4.5</span>
+            </div>
+
+            <div class="api-key-section">
+                <label for="api-key">API Key</label>
+                <div class="api-key-input-wrapper">
+                    <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off">
+                    <button id="toggle-key" class="icon-btn" title="API 키 보기/숨기기">
+                        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+                <button id="save-key" class="btn btn-secondary">키 저장</button>
+            </div>
+
+            <div class="system-prompt-section">
+                <label for="system-prompt">시스템 프롬프트</label>
+                <textarea id="system-prompt" placeholder="AI의 역할을 정의하세요...">당신은 도움이 되는 AI 어시스턴트입니다. 질문에 친절하고 정확하게 답변해 주세요.</textarea>
+            </div>
+
+            <button id="new-chat" class="btn btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                새 대화
+            </button>
+
+            <div class="chat-history">
+                <h3>대화 기록</h3>
+                <ul id="history-list"></ul>
+            </div>
+        </aside>
+
+        <!-- 메인 채팅 영역 -->
+        <main class="chat-main">
+            <div class="chat-header">
+                <h2 id="chat-title">새 대화</h2>
+                <div class="header-actions">
+                    <button id="export-chat" class="icon-btn" title="대화 내보내기">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chat-messages">
+                <div class="welcome-message">
+                    <div class="welcome-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                            <path d="M2 17l10 5 10-5"></path>
+                            <path d="M2 12l10 5 10-5"></path>
+                        </svg>
+                    </div>
+                    <h2>Claude Opus 4.5에 오신 것을 환영합니다</h2>
+                    <p>가장 강력한 Claude 모델과 대화를 시작하세요.</p>
+                    <div class="welcome-tips">
+                        <div class="tip">
+                            <span class="tip-icon">💡</span>
+                            <span>왼쪽에 API 키를 입력하세요</span>
+                        </div>
+                        <div class="tip">
+                            <span class="tip-icon">🔒</span>
+                            <span>키는 브라우저에 안전하게 저장됩니다</span>
+                        </div>
+                        <div class="tip">
+                            <span class="tip-icon">✨</span>
+                            <span>코드, 분석, 창작 등 무엇이든 물어보세요</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <div class="input-wrapper">
+                    <textarea
+                        id="message-input"
+                        placeholder="메시지를 입력하세요... (Shift+Enter로 줄바꿈)"
+                        rows="1"
+                    ></textarea>
+                    <button id="send-btn" class="send-btn" disabled>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <span class="char-count"><span id="char-count">0</span> / 100,000</span>
+                    <span class="model-info">Claude Opus 4.5 • claude-opus-4-5-20250514</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 로딩 오버레이 -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>응답을 생성하는 중...</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
