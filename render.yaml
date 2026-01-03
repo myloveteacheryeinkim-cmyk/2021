@@ -1,7 +1,10 @@
 services:
   - type: web
-    name: claude-chat
-    env: node
+    name: fusion-ai-chat
+    runtime: node
     plan: free
     buildCommand: npm install
     startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
