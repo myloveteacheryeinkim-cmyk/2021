@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: claude-chat
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
