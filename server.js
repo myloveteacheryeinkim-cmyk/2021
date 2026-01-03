@@ -8,67 +8,17 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
-// Claude API 프록시 엔드포인트
-app.post('/api/chat', async (req, res) => {
-    const { apiKey, messages, systemPrompt } = req.body;
+// 정적 파일 서빙
+app.use(express.static(__dirname));
 
-    if (!apiKey) {
-        return res.status(400).json({ error: 'API 키가 필요합니다.' });
-    }
-
-    const requestBody = JSON.stringify({
-        model: 'claude-opus-4-5-20250514',
-        max_tokens: 8192,
-        system: systemPrompt || '당신은 도움이 되는 AI 어시스턴트입니다.',
-        messages: messages
-    });
-
-    const options = {
-        hostname: 'api.anthropic.com',
-        port: 443,
-        path: '/v1/messages',
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-            'Content-Length': Buffer.byteLength(requestBody)
-        }
-    };
-
-    const request = https.request(options, (response) => {
-        let data = '';
-
-        response.on('data', (chunk) => {
-            data += chunk;
-        });
-
-        response.on('end', () => {
-            try {
-                const jsonData = JSON.parse(data);
-                if (response.statusCode === 200) {
-                    res.json(jsonData);
-                } else {
-                    res.status(response.statusCode).json(jsonData);
-                }
-            } catch (e) {
-                res.status(500).json({ error: '응답 파싱 오류', details: data });
-            }
-        });
-    });
-
-    request.on('error', (error) => {
-        res.status(500).json({ error: 'API 요청 실패', details: error.message });
-    });
-
-    request.write(requestBody);
-    request.end();
+// 메인 페이지
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// 스트리밍 엔드포인트
-app.post('/api/chat/stream', async (req, res) => {
+// Claude API 스트리밍 프록시
+app.post('/api/chat/stream', (req, res) => {
     const { apiKey, messages, systemPrompt } = req.body;
 
     if (!apiKey) {
@@ -111,7 +61,7 @@ app.post('/api/chat/stream', async (req, res) => {
     });
 
     request.on('error', (error) => {
-        res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: 'error', error: { message: error.message } })}\n\n`);
         res.end();
     });
 
@@ -124,5 +74,14 @@ app.post('/api/chat/stream', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 Claude Chat 서버가 http://localhost:${PORT} 에서 실행 중입니다.`);
+    console.log('');
+    console.log('========================================');
+    console.log('   Claude Opus 4.5 Chat Server');
+    console.log('========================================');
+    console.log('');
+    console.log(`   http://localhost:${PORT}`);
+    console.log('');
+    console.log('   브라우저에서 위 주소로 접속하세요!');
+    console.log('========================================');
+    console.log('');
 });

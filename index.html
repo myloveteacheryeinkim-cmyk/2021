@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Opus 4.5 Chat</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #D97757;
+            --primary-hover: #C66847;
+            --bg-dark: #1a1a1a;
+            --bg-card: #242424;
+            --bg-input: #2d2d2d;
+            --text: #ffffff;
+            --text-muted: #a0a0a0;
+            --border: #333333;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* 사이드바 */
+        .sidebar {
+            width: 320px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .logo h1 { font-size: 1.5rem; }
+
+        .badge {
+            background: linear-gradient(135deg, var(--primary), #e89b7b);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-input);
+            color: var(--text);
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        textarea { resize: vertical; min-height: 80px; }
+
+        .btn {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover { background: var(--primary-hover); }
+
+        .btn-secondary {
+            background: var(--bg-input);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-icon {
+            width: 44px;
+            padding: 10px;
+            flex-shrink: 0;
+        }
+
+        .history {
+            flex: 1;
+            margin-top: 20px;
+            overflow-y: auto;
+        }
+
+        .history h3 {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .history-item {
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 4px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-item:hover {
+            background: var(--bg-input);
+            color: var(--text);
+        }
+
+        .history-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .history-item .delete {
+            opacity: 0;
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .history-item:hover .delete { opacity: 1; }
+
+        /* 메인 */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h2 { font-size: 1.1rem; font-weight: 500; }
+
+        /* 메시지 */
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .welcome {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .welcome-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .welcome h2 {
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .tips {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .tip {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            background: var(--bg-card);
+            border-radius: 12px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            max-width: 85%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .message.assistant { align-self: flex-start; }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .message.user .avatar { background: var(--primary); }
+        .message.assistant .avatar { background: var(--bg-input); border: 1px solid var(--border); }
+
+        .content {
+            padding: 14px 18px;
+            border-radius: 16px;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .message.user .content {
+            background: var(--primary);
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .content {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .content p { margin-bottom: 0.75em; }
+        .content p:last-child { margin-bottom: 0; }
+
+        .content pre {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 12px 0;
+            position: relative;
+        }
+
+        .content code {
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+            font-size: 0.85rem;
+        }
+
+        .content code:not(pre code) {
+            background: var(--bg-dark);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .content ul, .content ol { margin: 0.75em 0; padding-left: 1.5em; }
+        .content li { margin-bottom: 0.25em; }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 4px 10px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        pre:hover .copy-btn { opacity: 1; }
+        .copy-btn:hover { background: var(--border); color: var(--text); }
+
+        .typing {
+            display: flex;
+            gap: 4px;
+            padding: 8px 0;
+        }
+
+        .typing span {
+            width: 8px;
+            height: 8px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing span:nth-child(1) { animation-delay: -0.32s; }
+        .typing span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        /* 입력 */
+        .input-area {
+            padding: 16px 24px 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .input-box {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px 16px;
+        }
+
+        .input-box:focus-within { border-color: var(--primary); }
+
+        #messageInput {
+            flex: 1;
+            border: none;
+            background: none;
+            color: var(--text);
+            font-size: 0.95rem;
+            resize: none;
+            max-height: 150px;
+            line-height: 1.5;
+        }
+
+        #messageInput:focus { outline: none; }
+
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 12px;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: scale(1.05);
+        }
+
+        .send-btn:disabled {
+            background: var(--bg-input);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        .input-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 4px 0;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* 알림 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 14px 24px;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9rem;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .toast.success { background: #4ade80; }
+        .toast.error { background: #f87171; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>Claude Chat</h1>
+                <span class="badge">Opus 4.5</span>
+            </div>
+
+            <div class="section">
+                <label>API Key</label>
+                <div class="input-group">
+                    <input type="password" id="apiKey" placeholder="sk-ant-api03-...">
+                    <button class="btn btn-secondary btn-icon" onclick="toggleKey()">👁</button>
+                </div>
+                <button class="btn btn-secondary" style="margin-top:8px" onclick="saveKey()">키 저장</button>
+            </div>
+
+            <div class="section">
+                <label>시스템 프롬프트</label>
+                <textarea id="systemPrompt" placeholder="AI 역할 정의...">당신은 도움이 되는 AI 어시스턴트입니다. 친절하고 정확하게 답변해 주세요.</textarea>
+            </div>
+
+            <button class="btn btn-primary" onclick="newChat()">+ 새 대화</button>
+
+            <div class="history">
+                <h3>대화 기록</h3>
+                <div id="historyList"></div>
+            </div>
+        </aside>
+
+        <main class="main">
+            <div class="header">
+                <h2 id="chatTitle">새 대화</h2>
+                <button class="btn btn-secondary" style="width:auto;padding:8px 16px" onclick="exportChat()">내보내기</button>
+            </div>
+
+            <div class="messages" id="messages">
+                <div class="welcome">
+                    <div class="welcome-icon">🤖</div>
+                    <h2>Claude Opus 4.5에 오신 것을 환영합니다</h2>
+                    <p>가장 강력한 Claude 모델과 대화를 시작하세요</p>
+                    <div class="tips">
+                        <div class="tip"><span>💡</span> 왼쪽에 API 키를 입력하세요</div>
+                        <div class="tip"><span>🔒</span> 키는 브라우저에 안전하게 저장됩니다</div>
+                        <div class="tip"><span>✨</span> 코드, 분석, 창작 등 무엇이든 물어보세요</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="input-box">
+                    <textarea id="messageInput" placeholder="메시지를 입력하세요... (Shift+Enter로 줄바꿈)" rows="1"></textarea>
+                    <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>➤</button>
+                </div>
+                <div class="input-footer">
+                    <span><span id="charCount">0</span> / 100,000</span>
+                    <span>claude-opus-4-5-20250514</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script>
+        let conversations = {};
+        let currentId = null;
+        let isLoading = false;
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            setupInput();
+        });
+
+        function loadData() {
+            const key = localStorage.getItem('claude_api_key');
+            if (key) document.getElementById('apiKey').value = key;
+
+            const prompt = localStorage.getItem('system_prompt');
+            if (prompt) document.getElementById('systemPrompt').value = prompt;
+
+            const convs = localStorage.getItem('conversations');
+            if (convs) {
+                conversations = JSON.parse(convs);
+                renderHistory();
+            }
+        }
+
+        function setupInput() {
+            const input = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const charCount = document.getElementById('charCount');
+
+            input.addEventListener('input', () => {
+                charCount.textContent = input.value.length;
+                sendBtn.disabled = !input.value.trim() || isLoading;
+                input.style.height = 'auto';
+                input.style.height = Math.min(input.scrollHeight, 150) + 'px';
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!sendBtn.disabled) sendMessage();
+                }
+            });
+        }
+
+        function toggleKey() {
+            const input = document.getElementById('apiKey');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function saveKey() {
+            const key = document.getElementById('apiKey').value.trim();
+            if (key) {
+                localStorage.setItem('claude_api_key', key);
+                toast('API 키가 저장되었습니다', 'success');
+            }
+        }
+
+        function newChat() {
+            const id = Date.now().toString();
+            conversations[id] = { id, title: '새 대화', messages: [], createdAt: new Date().toISOString() };
+            currentId = id;
+            save();
+            clearMessages();
+            document.getElementById('chatTitle').textContent = '새 대화';
+        }
+
+        function loadChat(id) {
+            currentId = id;
+            const conv = conversations[id];
+            document.getElementById('chatTitle').textContent = conv.title;
+            clearMessages();
+            conv.messages.forEach(m => addMessage(m.role, m.content));
+            renderHistory();
+        }
+
+        function deleteChat(id, e) {
+            e.stopPropagation();
+            delete conversations[id];
+            save();
+            if (currentId === id) {
+                currentId = null;
+                clearMessages();
+                document.getElementById('chatTitle').textContent = '새 대화';
+            }
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = '';
+            Object.keys(conversations).sort((a,b) => b-a).forEach(id => {
+                const conv = conversations[id];
+                const div = document.createElement('div');
+                div.className = 'history-item' + (id === currentId ? ' active' : '');
+                div.innerHTML = `
+                    <span>${escapeHtml(conv.title)}</span>
+                    <button class="delete" onclick="deleteChat('${id}', event)">×</button>
+                `;
+                div.onclick = () => loadChat(id);
+                list.appendChild(div);
+            });
+        }
+
+        function save() {
+            localStorage.setItem('conversations', JSON.stringify(conversations));
+            localStorage.setItem('system_prompt', document.getElementById('systemPrompt').value);
+            renderHistory();
+        }
+
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = `
+                <div class="welcome">
+                    <div class="welcome-icon">🤖</div>
+                    <h2>Claude Opus 4.5에 오신 것을 환영합니다</h2>
+                    <p>가장 강력한 Claude 모델과 대화를 시작하세요</p>
+                    <div class="tips">
+                        <div class="tip"><span>💡</span> 왼쪽에 API 키를 입력하세요</div>
+                        <div class="tip"><span>🔒</span> 키는 브라우저에 안전하게 저장됩니다</div>
+                        <div class="tip"><span>✨</span> 코드, 분석, 창작 등 무엇이든 물어보세요</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function addMessage(role, content, isStream = false) {
+            const messages = document.getElementById('messages');
+            const welcome = messages.querySelector('.welcome');
+            if (welcome) welcome.remove();
+
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
+            div.innerHTML = `
+                <div class="avatar">${role === 'user' ? '👤' : '🤖'}</div>
+                <div class="content">${role === 'assistant' ? formatMd(content) : escapeHtml(content)}</div>
+            `;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+
+            if (role === 'assistant') addCopyBtns(div);
+            return div;
+        }
+
+        function updateMessage(div, content) {
+            div.querySelector('.content').innerHTML = formatMd(content);
+            addCopyBtns(div);
+            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+        }
+
+        function formatMd(text) {
+            if (typeof marked !== 'undefined') {
+                marked.setOptions({ breaks: true, gfm: true });
+                return marked.parse(text);
+            }
+            return escapeHtml(text).replace(/\n/g, '<br>');
+        }
+
+        function addCopyBtns(div) {
+            div.querySelectorAll('pre').forEach(pre => {
+                if (!pre.querySelector('.copy-btn')) {
+                    const btn = document.createElement('button');
+                    btn.className = 'copy-btn';
+                    btn.textContent = '복사';
+                    btn.onclick = () => {
+                        navigator.clipboard.writeText(pre.textContent.replace('복사', ''));
+                        btn.textContent = '복사됨!';
+                        setTimeout(() => btn.textContent = '복사', 2000);
+                    };
+                    pre.appendChild(btn);
+                }
+            });
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+            if (!content || isLoading) return;
+
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                toast('API 키를 입력해주세요', 'error');
+                return;
+            }
+
+            if (!currentId) newChat();
+
+            addMessage('user', content);
+            conversations[currentId].messages.push({ role: 'user', content });
+
+            if (conversations[currentId].messages.length === 1) {
+                const title = content.substring(0, 30) + (content.length > 30 ? '...' : '');
+                conversations[currentId].title = title;
+                document.getElementById('chatTitle').textContent = title;
+            }
+
+            save();
+            input.value = '';
+            input.style.height = 'auto';
+            document.getElementById('charCount').textContent = '0';
+            document.getElementById('sendBtn').disabled = true;
+
+            await callAPI(apiKey);
+        }
+
+        async function callAPI(apiKey) {
+            isLoading = true;
+
+            // 타이핑 표시
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message assistant';
+            typingDiv.innerHTML = `
+                <div class="avatar">🤖</div>
+                <div class="content"><div class="typing"><span></span><span></span><span></span></div></div>
+            `;
+            document.getElementById('messages').appendChild(typingDiv);
+            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+
+            try {
+                const msgs = conversations[currentId].messages.map(m => ({ role: m.role, content: m.content }));
+
+                const res = await fetch('/api/chat/stream', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        apiKey,
+                        messages: msgs,
+                        systemPrompt: document.getElementById('systemPrompt').value
+                    })
+                });
+
+                typingDiv.remove();
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error?.message || err.error || 'API 오류');
+                }
+
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let assistantContent = '';
+                let messageDiv = null;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = line.slice(6);
+                            if (data === '[DONE]') continue;
+
+                            try {
+                                const parsed = JSON.parse(data);
+                                if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+                                    assistantContent += parsed.delta.text;
+                                    if (!messageDiv) {
+                                        messageDiv = addMessage('assistant', assistantContent);
+                                    } else {
+                                        updateMessage(messageDiv, assistantContent);
+                                    }
+                                }
+                                if (parsed.type === 'error') {
+                                    throw new Error(parsed.error?.message || '스트리밍 오류');
+                                }
+                            } catch (e) {}
+                        }
+                    }
+                }
+
+                if (assistantContent) {
+                    conversations[currentId].messages.push({ role: 'assistant', content: assistantContent });
+                    save();
+                }
+
+            } catch (error) {
+                typingDiv.remove();
+                toast(error.message, 'error');
+                addMessage('assistant', `오류: ${error.message}`);
+            } finally {
+                isLoading = false;
+                document.getElementById('sendBtn').disabled = !document.getElementById('messageInput').value.trim();
+            }
+        }
+
+        function exportChat() {
+            if (!currentId || !conversations[currentId]) {
+                toast('내보낼 대화가 없습니다', 'error');
+                return;
+            }
+            const conv = conversations[currentId];
+            let md = `# ${conv.title}\n\n`;
+            conv.messages.forEach(m => {
+                md += `## ${m.role === 'user' ? '👤 사용자' : '🤖 Claude'}\n\n${m.content}\n\n---\n\n`;
+            });
+            const blob = new Blob([md], { type: 'text/markdown' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `${conv.title}.md`;
+            a.click();
+            toast('대화가 내보내졌습니다', 'success');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function toast(msg, type) {
+            const div = document.createElement('div');
+            div.className = `toast ${type}`;
+            div.textContent = msg;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
