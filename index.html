@@ -3,203 +3,452 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Claude Opus 4.5 Chat</title>
+    <title>Claude</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Söhne:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --primary: #D97757;
-            --primary-hover: #C66847;
-            --bg-dark: #1a1a1a;
-            --bg-card: #242424;
-            --bg-input: #2d2d2d;
-            --text: #ffffff;
-            --text-muted: #a0a0a0;
-            --border: #333333;
+            --bg-primary: #2F2F2F;
+            --bg-secondary: #212121;
+            --bg-tertiary: #3D3D3D;
+            --bg-hover: #424242;
+            --text-primary: #ECECEC;
+            --text-secondary: #A0A0A0;
+            --text-muted: #6B6B6B;
+            --accent: #D4A574;
+            --accent-hover: #C4956A;
+            --border: #424242;
+            --user-msg: #3D3D3D;
+            --claude-msg: transparent;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-dark);
-            color: var(--text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
             height: 100vh;
             overflow: hidden;
         }
 
-        .container {
+        /* 레이아웃 */
+        .app {
             display: flex;
             height: 100vh;
         }
 
         /* 사이드바 */
         .sidebar {
-            width: 320px;
-            background: var(--bg-card);
+            width: 260px;
+            background: var(--bg-secondary);
             border-right: 1px solid var(--border);
-            padding: 20px;
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            margin-bottom: 8px;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-
-        .logo h1 { font-size: 1.5rem; }
-
-        .badge {
-            background: linear-gradient(135deg, var(--primary), #e89b7b);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
+            gap: 10px;
             font-weight: 600;
+            font-size: 1rem;
         }
 
-        .section {
-            margin-bottom: 20px;
-        }
-
-        .section label {
-            display: block;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 8px;
-        }
-
-        input, textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--bg-input);
-            color: var(--text);
-            font-size: 0.9rem;
-            font-family: inherit;
-        }
-
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        textarea { resize: vertical; min-height: 80px; }
-
-        .btn {
-            padding: 12px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--accent), #E8C4A0);
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            width: 100%;
+            font-size: 14px;
         }
 
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover { background: var(--primary-hover); }
-
-        .btn-secondary {
-            background: var(--bg-input);
-            color: var(--text);
+        .new-chat-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: transparent;
             border: 1px solid var(--border);
-        }
-
-        .btn-icon {
-            width: 44px;
-            padding: 10px;
-            flex-shrink: 0;
-        }
-
-        .history {
-            flex: 1;
-            margin-top: 20px;
-            overflow-y: auto;
-        }
-
-        .history h3 {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 12px;
-        }
-
-        .history-item {
-            padding: 12px;
             border-radius: 8px;
-            cursor: pointer;
-            margin-bottom: 4px;
+            color: var(--text-primary);
             font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .new-chat-btn:hover {
+            background: var(--bg-tertiary);
+        }
+
+        /* 모델 선택기 */
+        .model-selector {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .model-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .model-btn:hover {
+            background: var(--bg-hover);
+        }
+
+        .model-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-top: 4px;
+            z-index: 100;
+            display: none;
+            overflow: hidden;
+        }
+
+        .model-dropdown.show {
+            display: block;
+        }
+
+        .model-option {
+            padding: 12px 14px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .model-option:last-child {
+            border-bottom: none;
+        }
+
+        .model-option:hover {
+            background: var(--bg-hover);
+        }
+
+        .model-option.selected {
+            background: var(--bg-tertiary);
+        }
+
+        .model-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .model-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* 설정 토글들 */
+        .settings-section {
+            padding: 12px 0;
+            border-top: 1px solid var(--border);
+            margin-top: 8px;
+        }
+
+        .settings-title {
+            font-size: 0.75rem;
             color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            padding: 0 4px;
+        }
+
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+        }
+
+        .toggle-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+        }
+
+        .toggle-icon {
+            font-size: 1rem;
+        }
+
+        .toggle-switch {
+            width: 40px;
+            height: 22px;
+            background: var(--bg-tertiary);
+            border-radius: 11px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .toggle-switch.active {
+            background: var(--accent);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(18px);
+        }
+
+        /* 사용량 표시 */
+        .usage-section {
+            margin-top: auto;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+
+        .usage-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .usage-title {
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .usage-plan {
+            font-size: 0.7rem;
+            color: var(--accent);
+            background: rgba(212, 165, 116, 0.15);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .usage-bar {
+            height: 6px;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .usage-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+
+        .usage-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .usage-cost {
+            font-size: 0.8rem;
+            color: var(--text-primary);
+            margin-top: 4px;
+        }
+
+        /* API 키 입력 */
+        .api-section {
+            padding: 12px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .api-input-wrap {
+            display: flex;
+            gap: 6px;
+        }
+
+        .api-input {
+            flex: 1;
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+        }
+
+        .api-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .api-btn {
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .api-btn:hover {
+            background: var(--bg-hover);
+        }
+
+        /* 대화 기록 */
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 8px;
+        }
+
+        .history-title {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            padding: 8px 12px;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
         }
 
         .history-item:hover {
-            background: var(--bg-input);
-            color: var(--text);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
         }
 
         .history-item.active {
-            background: var(--primary);
-            color: white;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
         }
 
-        .history-item .delete {
+        .history-item .delete-btn {
             opacity: 0;
             background: none;
             border: none;
-            color: inherit;
+            color: var(--text-muted);
             cursor: pointer;
-            font-size: 1.2rem;
+            font-size: 1rem;
         }
 
-        .history-item:hover .delete { opacity: 1; }
+        .history-item:hover .delete-btn {
+            opacity: 1;
+        }
 
-        /* 메인 */
+        /* 메인 영역 */
         .main {
             flex: 1;
             display: flex;
             flex-direction: column;
+            background: var(--bg-primary);
         }
 
+        /* 헤더 */
         .header {
-            padding: 16px 24px;
-            border-bottom: 1px solid var(--border);
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .header h2 { font-size: 1.1rem; font-weight: 500; }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-        /* 메시지 */
+        .header-model {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .header-btn {
+            padding: 8px 12px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .header-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        /* 메시지 영역 */
         .messages {
             flex: 1;
             overflow-y: auto;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+            padding: 24px 0;
         }
 
+        .messages-inner {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* 웰컴 화면 */
         .welcome {
             display: flex;
             flex-direction: column;
@@ -207,39 +456,70 @@
             justify-content: center;
             height: 100%;
             text-align: center;
-            color: var(--text-muted);
+            padding: 40px;
         }
 
         .welcome-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--accent), #E8C4A0);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 24px;
         }
 
-        .welcome h2 {
-            color: var(--text);
+        .welcome h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
             margin-bottom: 8px;
         }
 
-        .tips {
-            margin-top: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+        .welcome p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 32px;
         }
 
-        .tip {
+        .welcome-features {
             display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 24px;
-            background: var(--bg-card);
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .feature-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
             border-radius: 12px;
+            padding: 16px 20px;
+            text-align: left;
+            width: 200px;
         }
 
+        .feature-icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        .feature-title {
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .feature-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* 메시지 */
         .message {
             display: flex;
-            gap: 12px;
-            max-width: 85%;
+            gap: 16px;
+            padding: 24px 0;
             animation: fadeIn 0.3s ease;
         }
 
@@ -248,46 +528,99 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .message.user { align-self: flex-end; flex-direction: row-reverse; }
-        .message.assistant { align-self: flex-start; }
+        .message.user {
+            flex-direction: row-reverse;
+        }
 
-        .avatar {
-            width: 36px;
-            height: 36px;
+        .message-avatar {
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
+            font-size: 0.9rem;
             flex-shrink: 0;
         }
 
-        .message.user .avatar { background: var(--primary); }
-        .message.assistant .avatar { background: var(--bg-input); border: 1px solid var(--border); }
+        .message.user .message-avatar {
+            background: var(--accent);
+        }
 
-        .content {
-            padding: 14px 18px;
-            border-radius: 16px;
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, var(--accent), #E8C4A0);
+        }
+
+        .message-content {
+            flex: 1;
+            max-width: 85%;
+        }
+
+        .message.user .message-content {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: 18px;
             font-size: 0.95rem;
-            line-height: 1.7;
+            line-height: 1.6;
         }
 
-        .message.user .content {
-            background: var(--primary);
-            border-bottom-right-radius: 4px;
+        .message.user .message-bubble {
+            background: var(--user-msg);
+            border-radius: 18px 18px 4px 18px;
         }
 
-        .message.assistant .content {
-            background: var(--bg-input);
+        .message.assistant .message-bubble {
+            background: transparent;
+        }
+
+        /* 심층 사고 표시 */
+        .thinking-block {
+            background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-bottom-left-radius: 4px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
         }
 
-        .content p { margin-bottom: 0.75em; }
-        .content p:last-child { margin-bottom: 0; }
+        .thinking-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            cursor: pointer;
+        }
 
-        .content pre {
-            background: #1e1e1e;
+        .thinking-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--accent);
+        }
+
+        .thinking-content {
+            padding: 16px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: none;
+            white-space: pre-wrap;
+        }
+
+        .thinking-content.show {
+            display: block;
+        }
+
+        /* 마크다운 스타일 */
+        .message-bubble p { margin-bottom: 0.75em; }
+        .message-bubble p:last-child { margin-bottom: 0; }
+
+        .message-bubble pre {
+            background: var(--bg-secondary);
             border-radius: 8px;
             padding: 16px;
             overflow-x: auto;
@@ -295,113 +628,160 @@
             position: relative;
         }
 
-        .content code {
+        .message-bubble code {
             font-family: 'SF Mono', Monaco, Consolas, monospace;
             font-size: 0.85rem;
         }
 
-        .content code:not(pre code) {
-            background: var(--bg-dark);
+        .message-bubble code:not(pre code) {
+            background: var(--bg-tertiary);
             padding: 2px 6px;
             border-radius: 4px;
         }
 
-        .content ul, .content ol { margin: 0.75em 0; padding-left: 1.5em; }
-        .content li { margin-bottom: 0.25em; }
+        .message-bubble ul, .message-bubble ol {
+            margin: 0.75em 0;
+            padding-left: 1.5em;
+        }
 
-        .copy-btn {
+        .copy-code-btn {
             position: absolute;
             top: 8px;
             right: 8px;
             padding: 4px 10px;
-            background: var(--bg-input);
+            background: var(--bg-tertiary);
             border: 1px solid var(--border);
             border-radius: 4px;
-            color: var(--text-muted);
+            color: var(--text-secondary);
             font-size: 0.75rem;
             cursor: pointer;
             opacity: 0;
             transition: opacity 0.2s;
         }
 
-        pre:hover .copy-btn { opacity: 1; }
-        .copy-btn:hover { background: var(--border); color: var(--text); }
+        pre:hover .copy-code-btn { opacity: 1; }
 
-        .typing {
+        /* 웹검색 결과 */
+        .search-results {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            padding: 16px;
+        }
+
+        .search-header {
             display: flex;
-            gap: 4px;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .search-item {
             padding: 8px 0;
+            border-bottom: 1px solid var(--border);
         }
 
-        .typing span {
-            width: 8px;
-            height: 8px;
-            background: var(--text-muted);
-            border-radius: 50%;
-            animation: bounce 1.4s infinite ease-in-out both;
+        .search-item:last-child {
+            border-bottom: none;
         }
 
-        .typing span:nth-child(1) { animation-delay: -0.32s; }
-        .typing span:nth-child(2) { animation-delay: -0.16s; }
-
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
+        .search-item-title {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            text-decoration: none;
         }
 
-        /* 입력 */
+        .search-item-title:hover {
+            text-decoration: underline;
+        }
+
+        .search-item-url {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* 입력 영역 */
         .input-area {
             padding: 16px 24px 24px;
-            border-top: 1px solid var(--border);
+            background: var(--bg-primary);
+        }
+
+        .input-container {
+            max-width: 800px;
+            margin: 0 auto;
         }
 
         .input-box {
-            display: flex;
-            gap: 12px;
-            align-items: flex-end;
-            background: var(--bg-card);
+            background: var(--bg-secondary);
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 12px 16px;
+            transition: border-color 0.2s;
         }
 
-        .input-box:focus-within { border-color: var(--primary); }
+        .input-box:focus-within {
+            border-color: var(--accent);
+        }
+
+        .input-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+        }
 
         #messageInput {
             flex: 1;
-            border: none;
             background: none;
-            color: var(--text);
+            border: none;
+            color: var(--text-primary);
             font-size: 0.95rem;
             resize: none;
-            max-height: 150px;
+            max-height: 200px;
             line-height: 1.5;
+            font-family: inherit;
         }
 
         #messageInput:focus { outline: none; }
+        #messageInput::placeholder { color: var(--text-muted); }
 
-        .send-btn {
-            width: 44px;
-            height: 44px;
+        .input-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .input-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
             border: none;
-            border-radius: 12px;
-            background: var(--primary);
-            color: white;
+            background: transparent;
+            color: var(--text-secondary);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.3rem;
-            flex-shrink: 0;
+            font-size: 1.1rem;
         }
 
-        .send-btn:hover:not(:disabled) {
-            background: var(--primary-hover);
-            transform: scale(1.05);
+        .input-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .send-btn {
+            background: var(--accent);
+            color: var(--bg-secondary);
+        }
+
+        .send-btn:hover {
+            background: var(--accent-hover);
         }
 
         .send-btn:disabled {
-            background: var(--bg-input);
+            background: var(--bg-tertiary);
             color: var(--text-muted);
             cursor: not-allowed;
         }
@@ -409,128 +789,480 @@
         .input-footer {
             display: flex;
             justify-content: space-between;
-            padding: 8px 4px 0;
+            align-items: center;
+            margin-top: 8px;
+            padding: 0 4px;
             font-size: 0.75rem;
             color: var(--text-muted);
         }
 
-        /* 알림 */
+        .input-features {
+            display: flex;
+            gap: 12px;
+        }
+
+        .input-feature {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .input-feature.active {
+            color: var(--accent);
+        }
+
+        /* 타이핑 인디케이터 */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 8px 0;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        /* 프로 플랜 모달 */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 480px;
+            width: 90%;
+        }
+
+        .modal h2 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        .modal-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .plan-features {
+            margin-bottom: 24px;
+        }
+
+        .plan-feature {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .plan-feature:last-child {
+            border-bottom: none;
+        }
+
+        .plan-feature-icon {
+            color: var(--success);
+        }
+
+        .plan-price {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-bottom: 24px;
+        }
+
+        .plan-price-amount {
+            font-size: 2.5rem;
+            font-weight: 600;
+        }
+
+        .plan-price-period {
+            color: var(--text-secondary);
+        }
+
+        .plan-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            color: var(--bg-secondary);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .plan-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* 토스트 */
         .toast {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            bottom: 24px;
+            right: 24px;
             padding: 14px 24px;
             border-radius: 8px;
             color: white;
             font-size: 0.9rem;
             z-index: 10000;
-            animation: slideIn 0.3s ease;
+            animation: slideUp 0.3s ease;
         }
 
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
-        .toast.success { background: #4ade80; }
-        .toast.error { background: #f87171; }
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--error); }
+        .toast.warning { background: var(--warning); }
 
+        /* 스크롤바 */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -260px;
+                top: 0;
+                bottom: 0;
+                z-index: 100;
+                transition: left 0.3s;
+            }
+            .sidebar.open { left: 0; }
+            .welcome-features { flex-direction: column; }
+            .feature-card { width: 100%; }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="app">
+        <!-- 사이드바 -->
         <aside class="sidebar">
-            <div class="logo">
-                <h1>Claude Chat</h1>
-                <span class="badge">Opus 4.5</span>
-            </div>
-
-            <div class="section">
-                <label>API Key</label>
-                <div class="input-group">
-                    <input type="password" id="apiKey" placeholder="sk-ant-api03-...">
-                    <button class="btn btn-secondary btn-icon" onclick="toggleKey()">👁</button>
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">C</div>
+                    <span>Claude</span>
                 </div>
-                <button class="btn btn-secondary" style="margin-top:8px" onclick="saveKey()">키 저장</button>
             </div>
 
-            <div class="section">
-                <label>시스템 프롬프트</label>
-                <textarea id="systemPrompt" placeholder="AI 역할 정의...">당신은 도움이 되는 AI 어시스턴트입니다. 친절하고 정확하게 답변해 주세요.</textarea>
+            <button class="new-chat-btn" onclick="newChat()">
+                <span>+</span> 새 대화
+            </button>
+
+            <!-- 모델 선택 -->
+            <div class="model-selector">
+                <button class="model-btn" onclick="toggleModelDropdown()">
+                    <span id="currentModel">Claude 4.5 Opus</span>
+                    <span>▼</span>
+                </button>
+                <div class="model-dropdown" id="modelDropdown">
+                    <div class="model-option selected" data-model="claude-opus-4-5-20250514">
+                        <span class="model-name">Claude 4.5 Opus</span>
+                        <span class="model-desc">가장 강력한 모델, 복잡한 작업에 최적 • $5/$25</span>
+                    </div>
+                    <div class="model-option" data-model="claude-sonnet-4-5-20250514">
+                        <span class="model-name">Claude 4.5 Sonnet</span>
+                        <span class="model-desc">균형잡힌 성능과 속도 • $3/$15</span>
+                    </div>
+                    <div class="model-option" data-model="claude-haiku-4-5-20250514">
+                        <span class="model-name">Claude 4.5 Haiku</span>
+                        <span class="model-desc">빠른 응답, 간단한 작업 • $1/$5</span>
+                    </div>
+                </div>
             </div>
 
-            <button class="btn btn-primary" onclick="newChat()">+ 새 대화</button>
+            <!-- 설정 토글 -->
+            <div class="settings-section">
+                <div class="settings-title">기능</div>
 
-            <div class="history">
-                <h3>대화 기록</h3>
+                <div class="toggle-item">
+                    <div class="toggle-label">
+                        <span class="toggle-icon">🧠</span>
+                        <span>심층 사고</span>
+                    </div>
+                    <div class="toggle-switch" id="thinkingToggle" onclick="toggleThinking()"></div>
+                </div>
+
+                <div class="toggle-item">
+                    <div class="toggle-label">
+                        <span class="toggle-icon">🔍</span>
+                        <span>웹 검색</span>
+                    </div>
+                    <div class="toggle-switch" id="searchToggle" onclick="toggleSearch()"></div>
+                </div>
+
+                <div class="toggle-item">
+                    <div class="toggle-label">
+                        <span class="toggle-icon">📚</span>
+                        <span>딥 리서치</span>
+                    </div>
+                    <div class="toggle-switch" id="researchToggle" onclick="toggleResearch()"></div>
+                </div>
+            </div>
+
+            <!-- API 키 -->
+            <div class="api-section">
+                <div class="settings-title">API 키</div>
+                <div class="api-input-wrap">
+                    <input type="password" id="apiKey" class="api-input" placeholder="sk-ant-...">
+                    <button class="api-btn" onclick="toggleApiKey()">👁</button>
+                    <button class="api-btn" onclick="saveApiKey()">저장</button>
+                </div>
+            </div>
+
+            <!-- 사용량 -->
+            <div class="usage-section">
+                <div class="usage-header">
+                    <span class="usage-title">이번 달 사용량</span>
+                    <span class="usage-plan" onclick="showPlanModal()">Pro</span>
+                </div>
+                <div class="usage-bar">
+                    <div class="usage-fill" id="usageBar" style="width: 0%"></div>
+                </div>
+                <div class="usage-text">
+                    <span id="usageTokens">0</span> / 45M 토큰
+                </div>
+                <div class="usage-cost">
+                    예상 비용: $<span id="usageCost">0.00</span>
+                </div>
+            </div>
+
+            <!-- 대화 기록 -->
+            <div class="chat-history">
+                <div class="history-title">최근 대화</div>
                 <div id="historyList"></div>
             </div>
         </aside>
 
+        <!-- 메인 -->
         <main class="main">
             <div class="header">
-                <h2 id="chatTitle">새 대화</h2>
-                <button class="btn btn-secondary" style="width:auto;padding:8px 16px" onclick="exportChat()">내보내기</button>
+                <div class="header-left">
+                    <span class="header-model" id="headerModel">Claude 4.5 Opus</span>
+                </div>
+                <div class="header-actions">
+                    <button class="header-btn" onclick="exportChat()">
+                        📥 내보내기
+                    </button>
+                </div>
             </div>
 
             <div class="messages" id="messages">
-                <div class="welcome">
-                    <div class="welcome-icon">🤖</div>
-                    <h2>Claude Opus 4.5에 오신 것을 환영합니다</h2>
-                    <p>가장 강력한 Claude 모델과 대화를 시작하세요</p>
-                    <div class="tips">
-                        <div class="tip"><span>💡</span> 왼쪽에 API 키를 입력하세요</div>
-                        <div class="tip"><span>🔒</span> 키는 브라우저에 안전하게 저장됩니다</div>
-                        <div class="tip"><span>✨</span> 코드, 분석, 창작 등 무엇이든 물어보세요</div>
+                <div class="messages-inner">
+                    <div class="welcome">
+                        <div class="welcome-icon">C</div>
+                        <h1>Claude에 오신 것을 환영합니다</h1>
+                        <p>무엇이든 물어보세요. 도움을 드릴 준비가 되어있습니다.</p>
+                        <div class="welcome-features">
+                            <div class="feature-card">
+                                <div class="feature-icon">🧠</div>
+                                <div class="feature-title">심층 사고</div>
+                                <div class="feature-desc">복잡한 문제를 단계별로 분석</div>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">🔍</div>
+                                <div class="feature-title">웹 검색</div>
+                                <div class="feature-desc">실시간 정보 검색</div>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">📚</div>
+                                <div class="feature-title">딥 리서치</div>
+                                <div class="feature-desc">깊이있는 조사와 분석</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="input-area">
-                <div class="input-box">
-                    <textarea id="messageInput" placeholder="메시지를 입력하세요... (Shift+Enter로 줄바꿈)" rows="1"></textarea>
-                    <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>➤</button>
-                </div>
-                <div class="input-footer">
-                    <span><span id="charCount">0</span> / 100,000</span>
-                    <span>claude-opus-4-5-20250514</span>
+                <div class="input-container">
+                    <div class="input-box">
+                        <div class="input-row">
+                            <textarea id="messageInput" placeholder="메시지를 입력하세요..." rows="1"></textarea>
+                            <div class="input-actions">
+                                <button class="input-btn send-btn" id="sendBtn" onclick="sendMessage()" disabled>
+                                    ➤
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-footer">
+                        <div class="input-features">
+                            <span class="input-feature" id="thinkingIndicator">🧠 심층사고 꺼짐</span>
+                            <span class="input-feature" id="searchIndicator">🔍 웹검색 꺼짐</span>
+                        </div>
+                        <span id="charCount">0</span> 자
+                    </div>
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- 프로 플랜 모달 -->
+    <div class="modal-overlay" id="planModal">
+        <div class="modal">
+            <h2>Pro 플랜</h2>
+            <p class="modal-subtitle">Claude의 모든 기능을 제한 없이 사용하세요</p>
+
+            <div class="plan-features">
+                <div class="plan-feature">
+                    <span class="plan-feature-icon">✓</span>
+                    <span>기본 플랜 대비 1.5배 사용량</span>
+                </div>
+                <div class="plan-feature">
+                    <span class="plan-feature-icon">✓</span>
+                    <span>Claude Opus 4 무제한</span>
+                </div>
+                <div class="plan-feature">
+                    <span class="plan-feature-icon">✓</span>
+                    <span>심층 사고 기능</span>
+                </div>
+                <div class="plan-feature">
+                    <span class="plan-feature-icon">✓</span>
+                    <span>웹 검색 & 딥 리서치</span>
+                </div>
+                <div class="plan-feature">
+                    <span class="plan-feature-icon">✓</span>
+                    <span>우선 지원</span>
+                </div>
+            </div>
+
+            <div class="plan-price">
+                <span class="plan-price-amount">$30</span>
+                <span class="plan-price-period">/ 월</span>
+            </div>
+
+            <button class="plan-btn" onclick="subscribePlan()">Pro 플랜 구독하기</button>
+            <button class="modal-close" onclick="closePlanModal()">×</button>
+        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
     <script>
-        let conversations = {};
-        let currentId = null;
-        let isLoading = false;
+        // 상태
+        let state = {
+            conversations: {},
+            currentId: null,
+            model: 'claude-opus-4-5-20250514',
+            modelName: 'Claude 4.5 Opus',
+            thinkingEnabled: false,
+            searchEnabled: false,
+            researchEnabled: false,
+            isLoading: false,
+            totalTokens: 0,
+            totalCost: 0
+        };
+
+        // 모델별 가격 (1M 토큰당)
+        const pricing = {
+            'claude-opus-4-5-20250514': { input: 5, output: 25 },
+            'claude-sonnet-4-5-20250514': { input: 3, output: 15 },
+            'claude-haiku-4-5-20250514': { input: 1, output: 5 }
+        };
 
         // 초기화
         document.addEventListener('DOMContentLoaded', () => {
-            loadData();
+            loadState();
             setupInput();
         });
 
-        function loadData() {
+        function loadState() {
+            const saved = localStorage.getItem('claude_state');
+            if (saved) {
+                const data = JSON.parse(saved);
+                state = { ...state, ...data };
+                updateUI();
+            }
+
             const key = localStorage.getItem('claude_api_key');
             if (key) document.getElementById('apiKey').value = key;
 
-            const prompt = localStorage.getItem('system_prompt');
-            if (prompt) document.getElementById('systemPrompt').value = prompt;
+            renderHistory();
+        }
 
-            const convs = localStorage.getItem('conversations');
-            if (convs) {
-                conversations = JSON.parse(convs);
-                renderHistory();
-            }
+        function saveState() {
+            localStorage.setItem('claude_state', JSON.stringify({
+                conversations: state.conversations,
+                model: state.model,
+                modelName: state.modelName,
+                thinkingEnabled: state.thinkingEnabled,
+                searchEnabled: state.searchEnabled,
+                researchEnabled: state.researchEnabled,
+                totalTokens: state.totalTokens,
+                totalCost: state.totalCost
+            }));
+        }
+
+        function updateUI() {
+            document.getElementById('currentModel').textContent = state.modelName;
+            document.getElementById('headerModel').textContent = state.modelName;
+
+            document.getElementById('thinkingToggle').classList.toggle('active', state.thinkingEnabled);
+            document.getElementById('searchToggle').classList.toggle('active', state.searchEnabled);
+            document.getElementById('researchToggle').classList.toggle('active', state.researchEnabled);
+
+            document.getElementById('thinkingIndicator').textContent = state.thinkingEnabled ? '🧠 심층사고 켜짐' : '🧠 심층사고 꺼짐';
+            document.getElementById('thinkingIndicator').classList.toggle('active', state.thinkingEnabled);
+            document.getElementById('searchIndicator').textContent = state.searchEnabled ? '🔍 웹검색 켜짐' : '🔍 웹검색 꺼짐';
+            document.getElementById('searchIndicator').classList.toggle('active', state.searchEnabled);
+
+            updateUsage();
+        }
+
+        function updateUsage() {
+            const usagePercent = Math.min((state.totalTokens / 45000000) * 100, 100);
+            document.getElementById('usageBar').style.width = usagePercent + '%';
+            document.getElementById('usageTokens').textContent = formatTokens(state.totalTokens);
+            document.getElementById('usageCost').textContent = state.totalCost.toFixed(2);
+        }
+
+        function formatTokens(n) {
+            if (n >= 1000000) return (n / 1000000).toFixed(2) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+            return n.toString();
         }
 
         function setupInput() {
@@ -540,9 +1272,9 @@
 
             input.addEventListener('input', () => {
                 charCount.textContent = input.value.length;
-                sendBtn.disabled = !input.value.trim() || isLoading;
+                sendBtn.disabled = !input.value.trim() || state.isLoading;
                 input.style.height = 'auto';
-                input.style.height = Math.min(input.scrollHeight, 150) + 'px';
+                input.style.height = Math.min(input.scrollHeight, 200) + 'px';
             });
 
             input.addEventListener('keydown', (e) => {
@@ -553,12 +1285,58 @@
             });
         }
 
-        function toggleKey() {
+        // 모델 선택
+        function toggleModelDropdown() {
+            document.getElementById('modelDropdown').classList.toggle('show');
+        }
+
+        document.querySelectorAll('.model-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                document.querySelectorAll('.model-option').forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+                state.model = opt.dataset.model;
+                state.modelName = opt.querySelector('.model-name').textContent;
+                updateUI();
+                saveState();
+                document.getElementById('modelDropdown').classList.remove('show');
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.model-selector')) {
+                document.getElementById('modelDropdown').classList.remove('show');
+            }
+        });
+
+        // 토글 기능
+        function toggleThinking() {
+            state.thinkingEnabled = !state.thinkingEnabled;
+            updateUI();
+            saveState();
+        }
+
+        function toggleSearch() {
+            state.searchEnabled = !state.searchEnabled;
+            updateUI();
+            saveState();
+        }
+
+        function toggleResearch() {
+            state.researchEnabled = !state.researchEnabled;
+            if (state.researchEnabled) {
+                state.searchEnabled = true; // 딥리서치는 웹검색 필요
+            }
+            updateUI();
+            saveState();
+        }
+
+        // API 키
+        function toggleApiKey() {
             const input = document.getElementById('apiKey');
             input.type = input.type === 'password' ? 'text' : 'password';
         }
 
-        function saveKey() {
+        function saveApiKey() {
             const key = document.getElementById('apiKey').value.trim();
             if (key) {
                 localStorage.setItem('claude_api_key', key);
@@ -566,92 +1344,135 @@
             }
         }
 
+        // 대화 관리
         function newChat() {
             const id = Date.now().toString();
-            conversations[id] = { id, title: '새 대화', messages: [], createdAt: new Date().toISOString() };
-            currentId = id;
-            save();
+            state.conversations[id] = {
+                id, title: '새 대화', messages: [], createdAt: new Date().toISOString()
+            };
+            state.currentId = id;
+            saveState();
             clearMessages();
-            document.getElementById('chatTitle').textContent = '새 대화';
+            renderHistory();
         }
 
         function loadChat(id) {
-            currentId = id;
-            const conv = conversations[id];
-            document.getElementById('chatTitle').textContent = conv.title;
+            state.currentId = id;
             clearMessages();
-            conv.messages.forEach(m => addMessage(m.role, m.content));
+            const conv = state.conversations[id];
+            if (conv) {
+                conv.messages.forEach(m => addMessage(m.role, m.content, m.thinking));
+            }
             renderHistory();
         }
 
         function deleteChat(id, e) {
             e.stopPropagation();
-            delete conversations[id];
-            save();
-            if (currentId === id) {
-                currentId = null;
+            delete state.conversations[id];
+            if (state.currentId === id) {
+                state.currentId = null;
                 clearMessages();
-                document.getElementById('chatTitle').textContent = '새 대화';
             }
+            saveState();
+            renderHistory();
         }
 
         function renderHistory() {
             const list = document.getElementById('historyList');
             list.innerHTML = '';
-            Object.keys(conversations).sort((a,b) => b-a).forEach(id => {
-                const conv = conversations[id];
+            Object.keys(state.conversations).sort((a, b) => b - a).forEach(id => {
+                const conv = state.conversations[id];
                 const div = document.createElement('div');
-                div.className = 'history-item' + (id === currentId ? ' active' : '');
+                div.className = 'history-item' + (id === state.currentId ? ' active' : '');
                 div.innerHTML = `
-                    <span>${escapeHtml(conv.title)}</span>
-                    <button class="delete" onclick="deleteChat('${id}', event)">×</button>
+                    <span>${escapeHtml(conv.title).substring(0, 25)}${conv.title.length > 25 ? '...' : ''}</span>
+                    <button class="delete-btn" onclick="deleteChat('${id}', event)">×</button>
                 `;
                 div.onclick = () => loadChat(id);
                 list.appendChild(div);
             });
         }
 
-        function save() {
-            localStorage.setItem('conversations', JSON.stringify(conversations));
-            localStorage.setItem('system_prompt', document.getElementById('systemPrompt').value);
-            renderHistory();
-        }
-
         function clearMessages() {
-            document.getElementById('messages').innerHTML = `
+            document.querySelector('.messages-inner').innerHTML = `
                 <div class="welcome">
-                    <div class="welcome-icon">🤖</div>
-                    <h2>Claude Opus 4.5에 오신 것을 환영합니다</h2>
-                    <p>가장 강력한 Claude 모델과 대화를 시작하세요</p>
-                    <div class="tips">
-                        <div class="tip"><span>💡</span> 왼쪽에 API 키를 입력하세요</div>
-                        <div class="tip"><span>🔒</span> 키는 브라우저에 안전하게 저장됩니다</div>
-                        <div class="tip"><span>✨</span> 코드, 분석, 창작 등 무엇이든 물어보세요</div>
+                    <div class="welcome-icon">C</div>
+                    <h1>Claude에 오신 것을 환영합니다</h1>
+                    <p>무엇이든 물어보세요. 도움을 드릴 준비가 되어있습니다.</p>
+                    <div class="welcome-features">
+                        <div class="feature-card">
+                            <div class="feature-icon">🧠</div>
+                            <div class="feature-title">심층 사고</div>
+                            <div class="feature-desc">복잡한 문제를 단계별로 분석</div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🔍</div>
+                            <div class="feature-title">웹 검색</div>
+                            <div class="feature-desc">실시간 정보 검색</div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">📚</div>
+                            <div class="feature-title">딥 리서치</div>
+                            <div class="feature-desc">깊이있는 조사와 분석</div>
+                        </div>
                     </div>
                 </div>
             `;
         }
 
-        function addMessage(role, content, isStream = false) {
-            const messages = document.getElementById('messages');
-            const welcome = messages.querySelector('.welcome');
+        function addMessage(role, content, thinking = null) {
+            const welcome = document.querySelector('.welcome');
             if (welcome) welcome.remove();
 
+            const container = document.querySelector('.messages-inner');
             const div = document.createElement('div');
             div.className = `message ${role}`;
+
+            let thinkingHtml = '';
+            if (thinking) {
+                thinkingHtml = `
+                    <div class="thinking-block">
+                        <div class="thinking-header" onclick="this.nextElementSibling.classList.toggle('show')">
+                            <span class="thinking-title">🧠 심층 사고 과정</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="thinking-content">${escapeHtml(thinking)}</div>
+                    </div>
+                `;
+            }
+
             div.innerHTML = `
-                <div class="avatar">${role === 'user' ? '👤' : '🤖'}</div>
-                <div class="content">${role === 'assistant' ? formatMd(content) : escapeHtml(content)}</div>
+                <div class="message-avatar">${role === 'user' ? '👤' : 'C'}</div>
+                <div class="message-content">
+                    ${thinkingHtml}
+                    <div class="message-bubble">${role === 'assistant' ? formatMd(content) : escapeHtml(content)}</div>
+                </div>
             `;
-            messages.appendChild(div);
-            messages.scrollTop = messages.scrollHeight;
+
+            container.appendChild(div);
+            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
 
             if (role === 'assistant') addCopyBtns(div);
             return div;
         }
 
-        function updateMessage(div, content) {
-            div.querySelector('.content').innerHTML = formatMd(content);
+        function updateMessage(div, content, thinking = null) {
+            let thinkingHtml = '';
+            if (thinking) {
+                thinkingHtml = `
+                    <div class="thinking-block">
+                        <div class="thinking-header" onclick="this.nextElementSibling.classList.toggle('show')">
+                            <span class="thinking-title">🧠 심층 사고 과정</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="thinking-content">${escapeHtml(thinking)}</div>
+                    </div>
+                `;
+            }
+            div.querySelector('.message-content').innerHTML = `
+                ${thinkingHtml}
+                <div class="message-bubble">${formatMd(content)}</div>
+            `;
             addCopyBtns(div);
             document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
         }
@@ -666,9 +1487,9 @@
 
         function addCopyBtns(div) {
             div.querySelectorAll('pre').forEach(pre => {
-                if (!pre.querySelector('.copy-btn')) {
+                if (!pre.querySelector('.copy-code-btn')) {
                     const btn = document.createElement('button');
-                    btn.className = 'copy-btn';
+                    btn.className = 'copy-code-btn';
                     btn.textContent = '복사';
                     btn.onclick = () => {
                         navigator.clipboard.writeText(pre.textContent.replace('복사', ''));
@@ -680,10 +1501,11 @@
             });
         }
 
+        // 메시지 전송
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const content = input.value.trim();
-            if (!content || isLoading) return;
+            if (!content || state.isLoading) return;
 
             const apiKey = document.getElementById('apiKey').value.trim();
             if (!apiKey) {
@@ -691,49 +1513,57 @@
                 return;
             }
 
-            if (!currentId) newChat();
+            if (!state.currentId) newChat();
 
             addMessage('user', content);
-            conversations[currentId].messages.push({ role: 'user', content });
+            state.conversations[state.currentId].messages.push({ role: 'user', content });
 
-            if (conversations[currentId].messages.length === 1) {
+            if (state.conversations[state.currentId].messages.length === 1) {
                 const title = content.substring(0, 30) + (content.length > 30 ? '...' : '');
-                conversations[currentId].title = title;
-                document.getElementById('chatTitle').textContent = title;
+                state.conversations[state.currentId].title = title;
             }
 
-            save();
+            saveState();
+            renderHistory();
             input.value = '';
             input.style.height = 'auto';
             document.getElementById('charCount').textContent = '0';
             document.getElementById('sendBtn').disabled = true;
 
-            await callAPI(apiKey);
+            await callAPI(apiKey, content);
         }
 
-        async function callAPI(apiKey) {
-            isLoading = true;
+        async function callAPI(apiKey, userMessage) {
+            state.isLoading = true;
 
-            // 타이핑 표시
             const typingDiv = document.createElement('div');
             typingDiv.className = 'message assistant';
             typingDiv.innerHTML = `
-                <div class="avatar">🤖</div>
-                <div class="content"><div class="typing"><span></span><span></span><span></span></div></div>
+                <div class="message-avatar">C</div>
+                <div class="message-content">
+                    <div class="message-bubble">
+                        <div class="typing-indicator"><span></span><span></span><span></span></div>
+                    </div>
+                </div>
             `;
-            document.getElementById('messages').appendChild(typingDiv);
+            document.querySelector('.messages-inner').appendChild(typingDiv);
             document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
 
             try {
-                const msgs = conversations[currentId].messages.map(m => ({ role: m.role, content: m.content }));
+                const msgs = state.conversations[state.currentId].messages.map(m => ({
+                    role: m.role, content: m.content
+                }));
 
-                const res = await fetch('/api/chat/stream', {
+                const res = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         apiKey,
                         messages: msgs,
-                        systemPrompt: document.getElementById('systemPrompt').value
+                        model: state.model,
+                        thinking: state.thinkingEnabled,
+                        search: state.searchEnabled,
+                        research: state.researchEnabled
                     })
                 });
 
@@ -744,65 +1574,73 @@
                     throw new Error(err.error?.message || err.error || 'API 오류');
                 }
 
-                const reader = res.body.getReader();
-                const decoder = new TextDecoder();
-                let assistantContent = '';
-                let messageDiv = null;
+                const data = await res.json();
 
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
+                // 사용량 업데이트
+                if (data.usage) {
+                    const price = pricing[state.model] || pricing['claude-opus-4-5-20250514'];
+                    const inputCost = (data.usage.input_tokens / 1000000) * price.input;
+                    const outputCost = (data.usage.output_tokens / 1000000) * price.output;
+                    state.totalTokens += data.usage.input_tokens + data.usage.output_tokens;
+                    state.totalCost += inputCost + outputCost;
+                    updateUsage();
+                }
 
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n');
+                // 응답 표시
+                let content = '';
+                let thinking = null;
 
-                    for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            const data = line.slice(6);
-                            if (data === '[DONE]') continue;
-
-                            try {
-                                const parsed = JSON.parse(data);
-                                if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-                                    assistantContent += parsed.delta.text;
-                                    if (!messageDiv) {
-                                        messageDiv = addMessage('assistant', assistantContent);
-                                    } else {
-                                        updateMessage(messageDiv, assistantContent);
-                                    }
-                                }
-                                if (parsed.type === 'error') {
-                                    throw new Error(parsed.error?.message || '스트리밍 오류');
-                                }
-                            } catch (e) {}
+                if (data.content) {
+                    data.content.forEach(block => {
+                        if (block.type === 'thinking') {
+                            thinking = block.thinking;
+                        } else if (block.type === 'text') {
+                            content += block.text;
                         }
-                    }
+                    });
                 }
 
-                if (assistantContent) {
-                    conversations[currentId].messages.push({ role: 'assistant', content: assistantContent });
-                    save();
+                // 웹검색 결과 표시
+                if (data.searchResults) {
+                    let searchHtml = '<div class="search-results"><div class="search-header">🔍 웹 검색 결과</div>';
+                    data.searchResults.forEach(r => {
+                        searchHtml += `
+                            <div class="search-item">
+                                <a href="${r.url}" target="_blank" class="search-item-title">${escapeHtml(r.title)}</a>
+                                <div class="search-item-url">${r.url}</div>
+                            </div>
+                        `;
+                    });
+                    searchHtml += '</div>';
+                    content = searchHtml + content;
                 }
+
+                addMessage('assistant', content, thinking);
+                state.conversations[state.currentId].messages.push({
+                    role: 'assistant', content, thinking
+                });
+                saveState();
 
             } catch (error) {
                 typingDiv.remove();
                 toast(error.message, 'error');
-                addMessage('assistant', `오류: ${error.message}`);
+                addMessage('assistant', `오류가 발생했습니다: ${error.message}`);
             } finally {
-                isLoading = false;
+                state.isLoading = false;
                 document.getElementById('sendBtn').disabled = !document.getElementById('messageInput').value.trim();
             }
         }
 
+        // 내보내기
         function exportChat() {
-            if (!currentId || !conversations[currentId]) {
+            if (!state.currentId || !state.conversations[state.currentId]) {
                 toast('내보낼 대화가 없습니다', 'error');
                 return;
             }
-            const conv = conversations[currentId];
+            const conv = state.conversations[state.currentId];
             let md = `# ${conv.title}\n\n`;
             conv.messages.forEach(m => {
-                md += `## ${m.role === 'user' ? '👤 사용자' : '🤖 Claude'}\n\n${m.content}\n\n---\n\n`;
+                md += `## ${m.role === 'user' ? '사용자' : 'Claude'}\n\n${m.content}\n\n---\n\n`;
             });
             const blob = new Blob([md], { type: 'text/markdown' });
             const a = document.createElement('a');
@@ -812,6 +1650,20 @@
             toast('대화가 내보내졌습니다', 'success');
         }
 
+        // 플랜 모달
+        function showPlanModal() {
+            document.getElementById('planModal').classList.add('show');
+        }
+
+        function closePlanModal() {
+            document.getElementById('planModal').classList.remove('show');
+        }
+
+        function subscribePlan() {
+            toast('결제 시스템은 준비 중입니다', 'warning');
+        }
+
+        // 유틸리티
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
