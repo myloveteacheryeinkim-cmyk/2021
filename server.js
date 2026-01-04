@@ -540,6 +540,15 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
 
 // ============ AI Provider 호출 함수 ============
 async function callAIProvider(provider, model, systemPrompt, messages, maxChars) {
+    // API 키가 없으면 데모 모드로 응답
+    const hasKey = (provider === 'openai' && API_KEYS.openai) ||
+                   (provider === 'anthropic' && API_KEYS.anthropic) ||
+                   (provider === 'google' && API_KEYS.google);
+
+    if (!hasKey) {
+        return generateDemoResponse(systemPrompt, messages, maxChars);
+    }
+
     switch (provider) {
         case 'openai':
             return await callOpenAI(model, systemPrompt, messages, maxChars);
@@ -550,6 +559,33 @@ async function callAIProvider(provider, model, systemPrompt, messages, maxChars)
         default:
             throw new Error('지원하지 않는 AI 제공자입니다');
     }
+}
+
+// 데모 모드 응답 생성 (API 키 없이도 작동)
+function generateDemoResponse(systemPrompt, messages, maxChars) {
+    const lastMsg = messages[messages.length - 1]?.content || '';
+
+    // 캐릭터 이름 추출
+    const nameMatch = systemPrompt.match(/당신은 (.+?)입니다/);
+    const charName = nameMatch ? nameMatch[1] : '캐릭터';
+
+    // 다양한 응답 템플릿
+    const responses = [
+        `응, 그렇구나! ${lastMsg.slice(0, 20)}... 에 대해 이야기해줘서 고마워! 나도 그런 생각을 해본 적 있어. 더 자세히 말해줄래?`,
+        `헤헤, 재미있는 얘기네! 나는 ${charName}이니까, 이런 대화가 정말 좋아. 다음엔 뭘 해볼까?`,
+        `오, 정말? 그거 흥미롭다! 나도 비슷한 경험이 있어... 음, 좀 더 이야기해볼까?`,
+        `그렇구나~ 네 말을 듣고 있으니까 기분이 좋아져! 우리 계속 얘기하자!`,
+        `와, 그런 생각을 하다니! 역시 넌 특별해. 나랑 더 많은 이야기 나눠줘!`,
+        `흥미로운 주제야! ${charName}인 내가 봐도 그건 정말 재미있는 것 같아. 계속 말해줘!`,
+        `아하, 이해했어! 그런 의미였구나. 나도 네 생각에 동의해. 우리 잘 통하는 것 같지 않아?`,
+        `음... 잠깐 생각해봤는데, 네 말이 맞는 것 같아! 역시 대화하면 할수록 재밌어!`
+    ];
+
+    // 랜덤 응답 선택
+    const response = responses[Math.floor(Math.random() * responses.length)];
+
+    // 길이 제한
+    return response.slice(0, maxChars);
 }
 
 async function callOpenAI(model, systemPrompt, messages, maxChars) {
