@@ -1,1682 +1,549 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Claude</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Söhne:wght@400;500;600&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        :root {
-            --bg-primary: #2F2F2F;
-            --bg-secondary: #212121;
-            --bg-tertiary: #3D3D3D;
-            --bg-hover: #424242;
-            --text-primary: #ECECEC;
-            --text-secondary: #A0A0A0;
-            --text-muted: #6B6B6B;
-            --accent: #D4A574;
-            --accent-hover: #C4956A;
-            --border: #424242;
-            --user-msg: #3D3D3D;
-            --claude-msg: transparent;
-            --success: #10B981;
-            --warning: #F59E0B;
-            --error: #EF4444;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* 레이아웃 */
-        .app {
-            display: flex;
-            height: 100vh;
-        }
-
-        /* 사이드바 */
-        .sidebar {
-            width: 260px;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 12px;
-        }
-
-        .sidebar-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            margin-bottom: 8px;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 600;
-            font-size: 1rem;
-        }
-
-        .logo-icon {
-            width: 28px;
-            height: 28px;
-            background: linear-gradient(135deg, var(--accent), #E8C4A0);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-        }
-
-        .new-chat-btn {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 14px;
-            background: transparent;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: background 0.2s;
-            width: 100%;
-            margin-bottom: 16px;
-        }
-
-        .new-chat-btn:hover {
-            background: var(--bg-tertiary);
-        }
-
-        /* 모델 선택기 */
-        .model-selector {
-            position: relative;
-            margin-bottom: 16px;
-        }
-
-        .model-btn {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            padding: 10px 14px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 0.85rem;
-            cursor: pointer;
-        }
-
-        .model-btn:hover {
-            background: var(--bg-hover);
-        }
-
-        .model-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: var(--bg-primary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            margin-top: 4px;
-            z-index: 100;
-            display: none;
-            overflow: hidden;
-        }
-
-        .model-dropdown.show {
-            display: block;
-        }
-
-        .model-option {
-            padding: 12px 14px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .model-option:last-child {
-            border-bottom: none;
-        }
-
-        .model-option:hover {
-            background: var(--bg-hover);
-        }
-
-        .model-option.selected {
-            background: var(--bg-tertiary);
-        }
-
-        .model-name {
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        .model-desc {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-        }
-
-        /* 설정 토글들 */
-        .settings-section {
-            padding: 12px 0;
-            border-top: 1px solid var(--border);
-            margin-top: 8px;
-        }
-
-        .settings-title {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 12px;
-            padding: 0 4px;
-        }
-
-        .toggle-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 12px;
-            border-radius: 8px;
-            margin-bottom: 4px;
-        }
-
-        .toggle-item:hover {
-            background: var(--bg-tertiary);
-        }
-
-        .toggle-label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.85rem;
-        }
-
-        .toggle-icon {
-            font-size: 1rem;
-        }
-
-        .toggle-switch {
-            width: 40px;
-            height: 22px;
-            background: var(--bg-tertiary);
-            border-radius: 11px;
-            position: relative;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .toggle-switch.active {
-            background: var(--accent);
-        }
-
-        .toggle-switch::after {
-            content: '';
-            position: absolute;
-            width: 18px;
-            height: 18px;
-            background: white;
-            border-radius: 50%;
-            top: 2px;
-            left: 2px;
-            transition: transform 0.2s;
-        }
-
-        .toggle-switch.active::after {
-            transform: translateX(18px);
-        }
-
-        /* 사용량 표시 */
-        .usage-section {
-            margin-top: auto;
-            padding: 12px;
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-        }
-
-        .usage-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .usage-title {
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        .usage-plan {
-            font-size: 0.7rem;
-            color: var(--accent);
-            background: rgba(212, 165, 116, 0.15);
-            padding: 2px 8px;
-            border-radius: 10px;
-        }
-
-        .usage-bar {
-            height: 6px;
-            background: var(--bg-secondary);
-            border-radius: 3px;
-            overflow: hidden;
-            margin-bottom: 8px;
-        }
-
-        .usage-fill {
-            height: 100%;
-            background: var(--accent);
-            border-radius: 3px;
-            transition: width 0.3s;
-        }
-
-        .usage-text {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-        }
-
-        .usage-cost {
-            font-size: 0.8rem;
-            color: var(--text-primary);
-            margin-top: 4px;
-        }
-
-        /* API 키 입력 */
-        .api-section {
-            padding: 12px 0;
-            border-top: 1px solid var(--border);
-        }
-
-        .api-input-wrap {
-            display: flex;
-            gap: 6px;
-        }
-
-        .api-input {
-            flex: 1;
-            padding: 8px 12px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text-primary);
-            font-size: 0.8rem;
-        }
-
-        .api-input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .api-btn {
-            padding: 8px 12px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text-primary);
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-
-        .api-btn:hover {
-            background: var(--bg-hover);
-        }
-
-        /* 대화 기록 */
-        .chat-history {
-            flex: 1;
-            overflow-y: auto;
-            margin-top: 8px;
-        }
-
-        .history-title {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            padding: 8px 12px;
-        }
-
-        .history-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        .history-item:hover {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-
-        .history-item.active {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-
-        .history-item .delete-btn {
-            opacity: 0;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 1rem;
-        }
-
-        .history-item:hover .delete-btn {
-            opacity: 1;
-        }
-
-        /* 메인 영역 */
-        .main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: var(--bg-primary);
-        }
-
-        /* 헤더 */
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 24px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .header-model {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .header-btn {
-            padding: 8px 12px;
-            background: transparent;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 0.8rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .header-btn:hover {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-
-        /* 메시지 영역 */
-        .messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px 0;
-        }
-
-        .messages-inner {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 24px;
-        }
-
-        /* 웰컴 화면 */
-        .welcome {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            text-align: center;
-            padding: 40px;
-        }
-
-        .welcome-icon {
-            width: 64px;
-            height: 64px;
-            background: linear-gradient(135deg, var(--accent), #E8C4A0);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            margin-bottom: 24px;
-        }
-
-        .welcome h1 {
-            font-size: 1.75rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .welcome p {
-            color: var(--text-secondary);
-            font-size: 1rem;
-            margin-bottom: 32px;
-        }
-
-        .welcome-features {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .feature-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px 20px;
-            text-align: left;
-            width: 200px;
-        }
-
-        .feature-icon {
-            font-size: 1.5rem;
-            margin-bottom: 8px;
-        }
-
-        .feature-title {
-            font-weight: 500;
-            font-size: 0.9rem;
-            margin-bottom: 4px;
-        }
-
-        .feature-desc {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-
-        /* 메시지 */
-        .message {
-            display: flex;
-            gap: 16px;
-            padding: 24px 0;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .message.user {
-            flex-direction: row-reverse;
-        }
-
-        .message-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-            flex-shrink: 0;
-        }
-
-        .message.user .message-avatar {
-            background: var(--accent);
-        }
-
-        .message.assistant .message-avatar {
-            background: linear-gradient(135deg, var(--accent), #E8C4A0);
-        }
-
-        .message-content {
-            flex: 1;
-            max-width: 85%;
-        }
-
-        .message.user .message-content {
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .message-bubble {
-            padding: 12px 16px;
-            border-radius: 18px;
-            font-size: 0.95rem;
-            line-height: 1.6;
-        }
-
-        .message.user .message-bubble {
-            background: var(--user-msg);
-            border-radius: 18px 18px 4px 18px;
-        }
-
-        .message.assistant .message-bubble {
-            background: transparent;
-        }
-
-        /* 심층 사고 표시 */
-        .thinking-block {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            margin-bottom: 16px;
-            overflow: hidden;
-        }
-
-        .thinking-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            background: var(--bg-tertiary);
-            cursor: pointer;
-        }
-
-        .thinking-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.85rem;
-            color: var(--accent);
-        }
-
-        .thinking-content {
-            padding: 16px;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            display: none;
-            white-space: pre-wrap;
-        }
-
-        .thinking-content.show {
-            display: block;
-        }
-
-        /* 마크다운 스타일 */
-        .message-bubble p { margin-bottom: 0.75em; }
-        .message-bubble p:last-child { margin-bottom: 0; }
-
-        .message-bubble pre {
-            background: var(--bg-secondary);
-            border-radius: 8px;
-            padding: 16px;
-            overflow-x: auto;
-            margin: 12px 0;
-            position: relative;
-        }
-
-        .message-bubble code {
-            font-family: 'SF Mono', Monaco, Consolas, monospace;
-            font-size: 0.85rem;
-        }
-
-        .message-bubble code:not(pre code) {
-            background: var(--bg-tertiary);
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-
-        .message-bubble ul, .message-bubble ol {
-            margin: 0.75em 0;
-            padding-left: 1.5em;
-        }
-
-        .copy-code-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            padding: 4px 10px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-            cursor: pointer;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-
-        pre:hover .copy-code-btn { opacity: 1; }
-
-        /* 웹검색 결과 */
-        .search-results {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            margin-bottom: 16px;
-            padding: 16px;
-        }
-
-        .search-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.85rem;
-            color: var(--accent);
-            margin-bottom: 12px;
-        }
-
-        .search-item {
-            padding: 8px 0;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .search-item:last-child {
-            border-bottom: none;
-        }
-
-        .search-item-title {
-            font-size: 0.85rem;
-            color: var(--text-primary);
-            text-decoration: none;
-        }
-
-        .search-item-title:hover {
-            text-decoration: underline;
-        }
-
-        .search-item-url {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-
-        /* 입력 영역 */
-        .input-area {
-            padding: 16px 24px 24px;
-            background: var(--bg-primary);
-        }
-
-        .input-container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .input-box {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 12px 16px;
-            transition: border-color 0.2s;
-        }
-
-        .input-box:focus-within {
-            border-color: var(--accent);
-        }
-
-        .input-row {
-            display: flex;
-            align-items: flex-end;
-            gap: 12px;
-        }
-
-        #messageInput {
-            flex: 1;
-            background: none;
-            border: none;
-            color: var(--text-primary);
-            font-size: 0.95rem;
-            resize: none;
-            max-height: 200px;
-            line-height: 1.5;
-            font-family: inherit;
-        }
-
-        #messageInput:focus { outline: none; }
-        #messageInput::placeholder { color: var(--text-muted); }
-
-        .input-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .input-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            border: none;
-            background: transparent;
-            color: var(--text-secondary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-        }
-
-        .input-btn:hover {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-
-        .send-btn {
-            background: var(--accent);
-            color: var(--bg-secondary);
-        }
-
-        .send-btn:hover {
-            background: var(--accent-hover);
-        }
-
-        .send-btn:disabled {
-            background: var(--bg-tertiary);
-            color: var(--text-muted);
-            cursor: not-allowed;
-        }
-
-        .input-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 8px;
-            padding: 0 4px;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-
-        .input-features {
-            display: flex;
-            gap: 12px;
-        }
-
-        .input-feature {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .input-feature.active {
-            color: var(--accent);
-        }
-
-        /* 타이핑 인디케이터 */
-        .typing-indicator {
-            display: flex;
-            gap: 4px;
-            padding: 8px 0;
-        }
-
-        .typing-indicator span {
-            width: 8px;
-            height: 8px;
-            background: var(--text-muted);
-            border-radius: 50%;
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
-
-        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
-
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
-        }
-
-        /* 프로 플랜 모달 */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.7);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .modal-overlay.show {
-            display: flex;
-        }
-
-        .modal {
-            background: var(--bg-primary);
-            border-radius: 16px;
-            padding: 32px;
-            max-width: 480px;
-            width: 90%;
-        }
-
-        .modal h2 {
-            font-size: 1.5rem;
-            margin-bottom: 8px;
-        }
-
-        .modal-subtitle {
-            color: var(--text-secondary);
-            margin-bottom: 24px;
-        }
-
-        .plan-features {
-            margin-bottom: 24px;
-        }
-
-        .plan-feature {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .plan-feature:last-child {
-            border-bottom: none;
-        }
-
-        .plan-feature-icon {
-            color: var(--success);
-        }
-
-        .plan-price {
-            display: flex;
-            align-items: baseline;
-            gap: 4px;
-            margin-bottom: 24px;
-        }
-
-        .plan-price-amount {
-            font-size: 2.5rem;
-            font-weight: 600;
-        }
-
-        .plan-price-period {
-            color: var(--text-secondary);
-        }
-
-        .plan-btn {
-            width: 100%;
-            padding: 14px;
-            background: var(--accent);
-            border: none;
-            border-radius: 8px;
-            color: var(--bg-secondary);
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-        }
-
-        .plan-btn:hover {
-            background: var(--accent-hover);
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-
-        /* 토스트 */
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            padding: 14px 24px;
-            border-radius: 8px;
-            color: white;
-            font-size: 0.9rem;
-            z-index: 10000;
-            animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .toast.success { background: var(--success); }
-        .toast.error { background: var(--error); }
-        .toast.warning { background: var(--warning); }
-
-        /* 스크롤바 */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
-        /* 반응형 */
-        @media (max-width: 768px) {
-            .sidebar {
-                position: fixed;
-                left: -260px;
-                top: 0;
-                bottom: 0;
-                z-index: 100;
-                transition: left 0.3s;
-            }
-            .sidebar.open { left: 0; }
-            .welcome-features { flex-direction: column; }
-            .feature-card { width: 100%; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 캐릭터 챗 – 실사용 웹앱</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-2: #0b1220;
+      --border: #1f2937;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #7c3aed;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --shadow: 0 24px 60px rgba(0,0,0,0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 15% 10%, rgba(124,58,237,0.15), transparent 30%),
+                  radial-gradient(circle at 80% 0%, rgba(56,189,248,0.14), transparent 25%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 16px;
+      padding: 18px;
+    }
+
+    @media (max-width: 960px) {
+      body { grid-template-columns: 1fr; padding: 12px; }
+      .sidebar { position: static; height: auto; }
+    }
+
+    .sidebar {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      display: grid;
+      gap: 16px;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 12px;
+      height: calc(100vh - 24px);
+      overflow: auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .logo {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #38bdf8, #7c3aed);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: #0b1220;
+      box-shadow: 0 14px 30px rgba(56,189,248,0.35);
+    }
+    .logo span { font-weight: 700; letter-spacing: -0.01em; }
+    .pill { padding: 8px 10px; border-radius: 10px; background: rgba(56,189,248,0.14); color: var(--accent); border:1px solid rgba(56,189,248,0.35); font-weight: 600; font-size: 12px; }
+
+    .section { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: var(--panel-2); }
+    .section h3 { font-size: 14px; margin-bottom: 8px; letter-spacing:-0.01em; }
+    .field { display: grid; gap: 6px; margin-bottom: 10px; }
+    .label-row { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 12px; }
+    input, textarea, select {
+      width: 100%;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      font-family: inherit;
+    }
+    input:focus, textarea:focus, select:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .toggle-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip {
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: var(--panel);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .15s ease;
+      font-size: 13px;
+    }
+    .chip.active { border-color: var(--accent); color: var(--accent); background: rgba(56,189,248,0.12); }
+
+    .main {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      overflow: hidden;
+      min-height: calc(100vh - 24px);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(17,24,39,0.8);
+      backdrop-filter: blur(6px);
+    }
+    .toolbar .meta { color: var(--muted); font-size: 13px; }
+    .toolbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .btn.accent { border-color: var(--accent); color: var(--accent); }
+
+    .chat { padding: 18px; overflow: auto; }
+    .bubble {
+      display: grid;
+      gap: 8px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 12px;
+      background: var(--panel-2);
+    }
+    .bubble.user { border-color: rgba(56,189,248,0.4); }
+    .bubble.assistant { border-color: rgba(124,58,237,0.3); }
+    .bubble .role { font-weight: 700; color: var(--muted); font-size: 13px; }
+    .bubble pre { background: #0b1220; border: 1px solid var(--border); padding: 12px; border-radius: 10px; overflow: auto; }
+
+    .search-results { background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.4); border-radius: 12px; padding: 10px; }
+    .search-item { margin-bottom: 8px; }
+    .search-item:last-child { margin-bottom: 0; }
+    .search-item a { color: var(--accent); }
+
+    .input-area {
+      border-top: 1px solid var(--border);
+      padding: 14px;
+      background: rgba(17,24,39,0.9);
+      display: grid;
+      gap: 8px;
+    }
+    .input-top { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 12px; }
+    .input-box { display: grid; gap: 8px; }
+    .input-row { display: grid; grid-template-columns: 1fr 90px; gap: 10px; }
+    .send {
+      background: var(--accent);
+      color: #0b1220;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.15s ease;
+    }
+    .send:hover { transform: translateY(-1px); box-shadow: 0 10px 18px rgba(56,189,248,0.35); }
+    .send:disabled { background: #1f2937; color: var(--muted); cursor: not-allowed; box-shadow: none; }
+
+    .toast {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: #0b1220;
+      border: 1px solid var(--border);
+      color: var(--text);
+      box-shadow: var(--shadow);
+      animation: fade 0.3s ease;
+      z-index: 50;
+    }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px);} to { opacity:1; transform:none;}}
+  </style>
 </head>
 <body>
-    <div class="app">
-        <!-- 사이드바 -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <div class="logo-icon">C</div>
-                    <span>Claude</span>
-                </div>
-            </div>
-
-            <button class="new-chat-btn" onclick="newChat()">
-                <span>+</span> 새 대화
-            </button>
-
-            <!-- 모델 선택 -->
-            <div class="model-selector">
-                <button class="model-btn" onclick="toggleModelDropdown()">
-                    <span id="currentModel">Claude 4.5 Opus</span>
-                    <span>▼</span>
-                </button>
-                <div class="model-dropdown" id="modelDropdown">
-                    <div class="model-option selected" data-model="claude-opus-4-5-20250514">
-                        <span class="model-name">Claude 4.5 Opus</span>
-                        <span class="model-desc">가장 강력한 모델, 복잡한 작업에 최적 • $5/$25</span>
-                    </div>
-                    <div class="model-option" data-model="claude-sonnet-4-5-20250514">
-                        <span class="model-name">Claude 4.5 Sonnet</span>
-                        <span class="model-desc">균형잡힌 성능과 속도 • $3/$15</span>
-                    </div>
-                    <div class="model-option" data-model="claude-haiku-4-5-20250514">
-                        <span class="model-name">Claude 4.5 Haiku</span>
-                        <span class="model-desc">빠른 응답, 간단한 작업 • $1/$5</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 설정 토글 -->
-            <div class="settings-section">
-                <div class="settings-title">기능</div>
-
-                <div class="toggle-item">
-                    <div class="toggle-label">
-                        <span class="toggle-icon">🧠</span>
-                        <span>심층 사고</span>
-                    </div>
-                    <div class="toggle-switch" id="thinkingToggle" onclick="toggleThinking()"></div>
-                </div>
-
-                <div class="toggle-item">
-                    <div class="toggle-label">
-                        <span class="toggle-icon">🔍</span>
-                        <span>웹 검색</span>
-                    </div>
-                    <div class="toggle-switch" id="searchToggle" onclick="toggleSearch()"></div>
-                </div>
-
-                <div class="toggle-item">
-                    <div class="toggle-label">
-                        <span class="toggle-icon">📚</span>
-                        <span>딥 리서치</span>
-                    </div>
-                    <div class="toggle-switch" id="researchToggle" onclick="toggleResearch()"></div>
-                </div>
-            </div>
-
-            <!-- API 키 -->
-            <div class="api-section">
-                <div class="settings-title">API 키</div>
-                <div class="api-input-wrap">
-                    <input type="password" id="apiKey" class="api-input" placeholder="sk-ant-...">
-                    <button class="api-btn" onclick="toggleApiKey()">👁</button>
-                    <button class="api-btn" onclick="saveApiKey()">저장</button>
-                </div>
-            </div>
-
-            <!-- 사용량 -->
-            <div class="usage-section">
-                <div class="usage-header">
-                    <span class="usage-title">이번 달 사용량</span>
-                    <span class="usage-plan" onclick="showPlanModal()">Pro</span>
-                </div>
-                <div class="usage-bar">
-                    <div class="usage-fill" id="usageBar" style="width: 0%"></div>
-                </div>
-                <div class="usage-text">
-                    <span id="usageTokens">0</span> / 45M 토큰
-                </div>
-                <div class="usage-cost">
-                    예상 비용: $<span id="usageCost">0.00</span>
-                </div>
-            </div>
-
-            <!-- 대화 기록 -->
-            <div class="chat-history">
-                <div class="history-title">최근 대화</div>
-                <div id="historyList"></div>
-            </div>
-        </aside>
-
-        <!-- 메인 -->
-        <main class="main">
-            <div class="header">
-                <div class="header-left">
-                    <span class="header-model" id="headerModel">Claude 4.5 Opus</span>
-                </div>
-                <div class="header-actions">
-                    <button class="header-btn" onclick="exportChat()">
-                        📥 내보내기
-                    </button>
-                </div>
-            </div>
-
-            <div class="messages" id="messages">
-                <div class="messages-inner">
-                    <div class="welcome">
-                        <div class="welcome-icon">C</div>
-                        <h1>Claude에 오신 것을 환영합니다</h1>
-                        <p>무엇이든 물어보세요. 도움을 드릴 준비가 되어있습니다.</p>
-                        <div class="welcome-features">
-                            <div class="feature-card">
-                                <div class="feature-icon">🧠</div>
-                                <div class="feature-title">심층 사고</div>
-                                <div class="feature-desc">복잡한 문제를 단계별로 분석</div>
-                            </div>
-                            <div class="feature-card">
-                                <div class="feature-icon">🔍</div>
-                                <div class="feature-title">웹 검색</div>
-                                <div class="feature-desc">실시간 정보 검색</div>
-                            </div>
-                            <div class="feature-card">
-                                <div class="feature-icon">📚</div>
-                                <div class="feature-title">딥 리서치</div>
-                                <div class="feature-desc">깊이있는 조사와 분석</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="input-area">
-                <div class="input-container">
-                    <div class="input-box">
-                        <div class="input-row">
-                            <textarea id="messageInput" placeholder="메시지를 입력하세요..." rows="1"></textarea>
-                            <div class="input-actions">
-                                <button class="input-btn send-btn" id="sendBtn" onclick="sendMessage()" disabled>
-                                    ➤
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="input-footer">
-                        <div class="input-features">
-                            <span class="input-feature" id="thinkingIndicator">🧠 심층사고 꺼짐</span>
-                            <span class="input-feature" id="searchIndicator">🔍 웹검색 꺼짐</span>
-                        </div>
-                        <span id="charCount">0</span> 자
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- 프로 플랜 모달 -->
-    <div class="modal-overlay" id="planModal">
-        <div class="modal">
-            <h2>Pro 플랜</h2>
-            <p class="modal-subtitle">Claude의 모든 기능을 제한 없이 사용하세요</p>
-
-            <div class="plan-features">
-                <div class="plan-feature">
-                    <span class="plan-feature-icon">✓</span>
-                    <span>기본 플랜 대비 1.5배 사용량</span>
-                </div>
-                <div class="plan-feature">
-                    <span class="plan-feature-icon">✓</span>
-                    <span>Claude Opus 4 무제한</span>
-                </div>
-                <div class="plan-feature">
-                    <span class="plan-feature-icon">✓</span>
-                    <span>심층 사고 기능</span>
-                </div>
-                <div class="plan-feature">
-                    <span class="plan-feature-icon">✓</span>
-                    <span>웹 검색 & 딥 리서치</span>
-                </div>
-                <div class="plan-feature">
-                    <span class="plan-feature-icon">✓</span>
-                    <span>우선 지원</span>
-                </div>
-            </div>
-
-            <div class="plan-price">
-                <span class="plan-price-amount">$30</span>
-                <span class="plan-price-period">/ 월</span>
-            </div>
-
-            <button class="plan-btn" onclick="subscribePlan()">Pro 플랜 구독하기</button>
-            <button class="modal-close" onclick="closePlanModal()">×</button>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">
+        <div class="logo-badge">AI</div>
+        <div>
+          <span>캐릭터 챗</span><br>
+          <small class="pill">크롬 브라우저에서 바로 사용</small>
         </div>
+      </div>
+      <button class="btn accent" id="newChatBtn">새 대화</button>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
-    <script>
-        // 상태
-        let state = {
-            conversations: {},
-            currentId: null,
-            model: 'claude-opus-4-5-20250514',
-            modelName: 'Claude 4.5 Opus',
-            thinkingEnabled: false,
-            searchEnabled: false,
-            researchEnabled: false,
-            isLoading: false,
-            totalTokens: 0,
-            totalCost: 0
-        };
+    <div class="section">
+      <h3>API 키</h3>
+      <div class="field">
+        <div class="label-row"><span>Anthropic API</span><span class="muted">sk-ant-...</span></div>
+        <input type="password" id="apiKey" placeholder="API 키 입력" />
+      </div>
+      <div class="toggle-row">
+        <button class="btn" id="saveKey">저장</button>
+        <button class="btn" id="clearKey">삭제</button>
+      </div>
+    </div>
 
-        // 모델별 가격 (1M 토큰당)
-        const pricing = {
+    <div class="section">
+      <h3>모델 & 기능</h3>
+      <div class="field">
+        <div class="label-row"><span>모델 선택</span><span class="muted" id="modelMeta">Claude 4.5 Opus · 80C</span></div>
+        <select id="modelSelect"></select>
+      </div>
+      <div class="toggle-row">
+        <div class="chip" data-toggle="thinking">🧠 심층 사고</div>
+        <div class="chip" data-toggle="search">🔍 웹 검색</div>
+        <div class="chip" data-toggle="research">📚 딥 리서치</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>캐릭터 베이스 프롬프트</h3>
+      <div class="field">
+        <textarea id="creatorPrompt" placeholder="캐릭터 성격, 말투, 과거사, 세계관 등을 10,000자까지 입력"></textarea>
+      </div>
+      <div class="label-row"><span>유저 노트</span><span class="muted">1,500자</span></div>
+      <textarea id="userNote" placeholder="내 외모, 직업, 캐릭터와의 관계 등"></textarea>
+    </div>
+
+    <div class="section">
+      <h3>모델 라인업 & 비용</h3>
+      <div class="field" id="pricing"></div>
+    </div>
+
+    <div class="section">
+      <h3>세션 정보</h3>
+      <div class="label-row"><span>누적 토큰</span><span id="tokCount">0</span></div>
+      <div class="label-row"><span>예상 비용</span><span id="cost">$0.00</span></div>
+      <div class="label-row"><span>출력 제한</span><span id="outputLimit">-</span></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="toolbar">
+      <div>
+        <div class="meta">현재 모델</div>
+        <div id="currentModel">Claude 4.5 Opus</div>
+      </div>
+      <div class="toolbar-actions">
+        <button class="btn" id="exportBtn">내보내기</button>
+        <button class="btn" id="clearBtn">대화 초기화</button>
+      </div>
+    </div>
+
+    <div class="chat" id="chat"></div>
+
+    <div class="input-area">
+      <div class="input-top">
+        <span id="status">API 키를 입력해 시작하세요.</span>
+        <span id="charCount">0자</span>
+      </div>
+      <div class="input-box">
+        <div class="input-row">
+          <textarea id="message" rows="3" placeholder="메시지를 입력하고 Enter로 전송 (Shift+Enter 줄바꿈)"></textarea>
+          <button class="send" id="send">보내기</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const models = [
+      { id:'claude-opus-4-5-20250514', name:'Claude 4.5 Opus', grade:'Ultra Chat', cost:'80 C', limit:'600자' },
+      { id:'claude-sonnet-4-5-20250514', name:'Claude 4.5 Sonnet', grade:'Pro Chat 2.0', cost:'50 C', limit:'600자' },
+      { id:'claude-haiku-4-5-20250514', name:'Claude 4.5 Haiku', grade:'Air Chat', cost:'20 C', limit:'600자' }
+    ];
+
+    const state = {
+      model: models[0].id,
+      thinking: false,
+      search: false,
+      research: false,
+      messages: [],
+      personaInjected: false,
+      totalTokens: 0,
+      totalCost: 0
+    };
+
+    const els = {
+      modelSelect: document.getElementById('modelSelect'),
+      modelMeta: document.getElementById('modelMeta'),
+      currentModel: document.getElementById('currentModel'),
+      chat: document.getElementById('chat'),
+      message: document.getElementById('message'),
+      send: document.getElementById('send'),
+      status: document.getElementById('status'),
+      charCount: document.getElementById('charCount'),
+      apiKey: document.getElementById('apiKey'),
+      saveKey: document.getElementById('saveKey'),
+      clearKey: document.getElementById('clearKey'),
+      creatorPrompt: document.getElementById('creatorPrompt'),
+      userNote: document.getElementById('userNote'),
+      pricing: document.getElementById('pricing'),
+      tokCount: document.getElementById('tokCount'),
+      cost: document.getElementById('cost'),
+      outputLimit: document.getElementById('outputLimit'),
+      exportBtn: document.getElementById('exportBtn'),
+      clearBtn: document.getElementById('clearBtn'),
+      newChatBtn: document.getElementById('newChatBtn')
+    };
+
+    function init() {
+      renderModels();
+      renderPricing();
+      loadSaved();
+      bindEvents();
+      updateModelMeta();
+      renderEmpty();
+    }
+
+    function renderModels() {
+      els.modelSelect.innerHTML = models.map(m => `<option value="${m.id}">${m.name} · ${m.grade}</option>`).join('');
+      els.modelSelect.value = state.model;
+    }
+
+    function renderPricing() {
+      els.pricing.innerHTML = models.map(m => `<div style="padding:6px 0;border-bottom:1px solid var(--border);"><div><strong>${m.grade}</strong> – ${m.name}</div><div class="muted">${m.cost} · 출력 ${m.limit}</div></div>`).join('');
+    }
+
+    function loadSaved() {
+      const key = localStorage.getItem('anthropic_key');
+      if (key) els.apiKey.value = key;
+      const prompt = localStorage.getItem('creator_prompt');
+      if (prompt) els.creatorPrompt.value = prompt;
+      const note = localStorage.getItem('user_note');
+      if (note) els.userNote.value = note;
+    }
+
+    function bindEvents() {
+      els.modelSelect.addEventListener('change', () => {
+        state.model = els.modelSelect.value;
+        updateModelMeta();
+      });
+
+      document.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          chip.classList.toggle('active');
+          const key = chip.dataset.toggle;
+          state[key] = chip.classList.contains('active');
+          if (key === 'research' && state.research) {
+            state.search = true;
+            document.querySelector('[data-toggle="search"]').classList.add('active');
+          }
+        });
+      });
+
+      els.saveKey.onclick = () => { localStorage.setItem('anthropic_key', els.apiKey.value.trim()); toast('API 키 저장 완료'); };
+      els.clearKey.onclick = () => { localStorage.removeItem('anthropic_key'); els.apiKey.value=''; toast('API 키 삭제'); };
+      els.creatorPrompt.oninput = () => localStorage.setItem('creator_prompt', els.creatorPrompt.value);
+      els.userNote.oninput = () => localStorage.setItem('user_note', els.userNote.value);
+
+      els.message.addEventListener('input', () => {
+        els.charCount.textContent = `${els.message.value.length}자`;
+        els.send.disabled = !els.message.value.trim();
+      });
+      els.message.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          if (!els.send.disabled) sendMessage();
+        }
+      });
+
+      els.send.onclick = sendMessage;
+      els.exportBtn.onclick = exportChat;
+      els.clearBtn.onclick = () => { state.messages = []; state.personaInjected=false; renderEmpty(); };
+      els.newChatBtn.onclick = () => { state.messages = []; state.personaInjected=false; renderEmpty(); toast('새 대화 시작'); };
+    }
+
+    function updateModelMeta() {
+      const m = models.find(x => x.id === state.model) || models[0];
+      els.modelMeta.textContent = `${m.name} · ${m.cost}`;
+      els.currentModel.textContent = `${m.grade} · ${m.name}`;
+      els.outputLimit.textContent = m.limit;
+    }
+
+    function renderEmpty() {
+      els.chat.innerHTML = `<div class="bubble" style="text-align:center; color: var(--muted);">
+        📡 캐릭터 프롬프트와 메시지를 입력하면 대화를 시작합니다.
+        <div style="margin-top:6px; font-size:12px;">심층 사고 / 웹 검색 / 딥 리서치 토글을 사이드바에서 켜세요.</div>
+      </div>`;
+      els.status.textContent = 'API 키를 입력해 시작하세요.';
+    }
+
+    function addMessage(role, content, thinking=null, searchResults=null) {
+      const div = document.createElement('div');
+      div.className = `bubble ${role}`;
+      div.innerHTML = `<div class="role">${role === 'user' ? '사용자' : 'AI'}</div>`;
+      if (searchResults) {
+        const box = document.createElement('div');
+        box.className = 'search-results';
+        box.innerHTML = `<strong>웹 검색 결과</strong>` + searchResults.map(r => `<div class="search-item"><a href="${r.url}" target="_blank">${escapeHtml(r.title)}</a><div class="muted" style="font-size:12px;">${r.url}</div></div>`).join('');
+        div.appendChild(box);
+      }
+      if (thinking) {
+        const pre = document.createElement('pre');
+        pre.textContent = thinking;
+        pre.style.whiteSpace = 'pre-wrap';
+        div.appendChild(pre);
+      }
+      const body = document.createElement('div');
+      body.innerHTML = formatMd(content);
+      div.appendChild(body);
+      els.chat.appendChild(div);
+      els.chat.scrollTop = els.chat.scrollHeight;
+    }
+
+    function formatMd(text) {
+      return text.replace(/\n/g, '<br>');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    async function sendMessage() {
+      const apiKey = els.apiKey.value.trim();
+      if (!apiKey) { toast('API 키를 입력하세요', 'error'); return; }
+      const content = els.message.value.trim();
+      if (!content) return;
+
+      els.send.disabled = true;
+      els.status.textContent = '응답 생성 중...';
+
+      // inject persona once
+      if (!state.personaInjected && (els.creatorPrompt.value || els.userNote.value)) {
+        state.messages.push({ role:'user', content: ` [캐릭터 베이스 프롬프트]\n${els.creatorPrompt.value}\n\n[유저 노트]\n${els.userNote.value} ` });
+        state.personaInjected = true;
+      }
+
+      state.messages.push({ role:'user', content });
+      addMessage('user', content);
+      els.message.value = '';
+      els.charCount.textContent = '0자';
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            apiKey,
+            messages: state.messages,
+            model: state.model,
+            thinking: state.thinking,
+            search: state.search,
+            research: state.research
+          })
+        });
+        if (!res.ok) throw new Error('API 오류');
+        const data = await res.json();
+
+        let answer = '';
+        let thinking = null;
+        if (data.content) {
+          data.content.forEach(block => {
+            if (block.type === 'thinking') thinking = block.thinking;
+            if (block.type === 'text') answer += block.text;
+          });
+        }
+
+        const searchResults = data.searchResults || null;
+        addMessage('assistant', answer || '응답이 비어 있습니다.', thinking, searchResults);
+        state.messages.push({ role:'assistant', content: answer, thinking });
+
+        if (data.usage) {
+          const priceMap = {
             'claude-opus-4-5-20250514': { input: 5, output: 25 },
             'claude-sonnet-4-5-20250514': { input: 3, output: 15 },
             'claude-haiku-4-5-20250514': { input: 1, output: 5 }
-        };
-
-        // 초기화
-        document.addEventListener('DOMContentLoaded', () => {
-            loadState();
-            setupInput();
-        });
-
-        function loadState() {
-            const saved = localStorage.getItem('claude_state');
-            if (saved) {
-                const data = JSON.parse(saved);
-                state = { ...state, ...data };
-                updateUI();
-            }
-
-            const key = localStorage.getItem('claude_api_key');
-            if (key) document.getElementById('apiKey').value = key;
-
-            renderHistory();
+          };
+          const p = priceMap[state.model] || priceMap['claude-opus-4-5-20250514'];
+          state.totalTokens += (data.usage.input_tokens || 0) + (data.usage.output_tokens || 0);
+          state.totalCost += (data.usage.input_tokens/1_000_000)*p.input + (data.usage.output_tokens/1_000_000)*p.output;
+          els.tokCount.textContent = formatTokens(state.totalTokens);
+          els.cost.textContent = `$${state.totalCost.toFixed(2)}`;
         }
 
-        function saveState() {
-            localStorage.setItem('claude_state', JSON.stringify({
-                conversations: state.conversations,
-                model: state.model,
-                modelName: state.modelName,
-                thinkingEnabled: state.thinkingEnabled,
-                searchEnabled: state.searchEnabled,
-                researchEnabled: state.researchEnabled,
-                totalTokens: state.totalTokens,
-                totalCost: state.totalCost
-            }));
-        }
+        els.status.textContent = '완료';
+      } catch (e) {
+        addMessage('assistant', `오류: ${e.message}`);
+        toast(e.message, 'error');
+      } finally {
+        els.send.disabled = false;
+      }
+    }
 
-        function updateUI() {
-            document.getElementById('currentModel').textContent = state.modelName;
-            document.getElementById('headerModel').textContent = state.modelName;
+    function formatTokens(n) {
+      if (n >= 1_000_000) return (n/1_000_000).toFixed(2)+'M';
+      if (n >= 1_000) return (n/1_000).toFixed(1)+'K';
+      return n.toString();
+    }
 
-            document.getElementById('thinkingToggle').classList.toggle('active', state.thinkingEnabled);
-            document.getElementById('searchToggle').classList.toggle('active', state.searchEnabled);
-            document.getElementById('researchToggle').classList.toggle('active', state.researchEnabled);
+    function exportChat() {
+      if (!state.messages.length) { toast('내보낼 대화가 없습니다', 'error'); return; }
+      let md = '# 캐릭터 챗 대화\n\n';
+      state.messages.forEach(m => { md += `## ${m.role === 'user' ? '사용자' : 'AI'}\n\n${m.content}\n\n---\n`; });
+      const blob = new Blob([md], { type:'text/markdown' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'chat.md';
+      a.click();
+    }
 
-            document.getElementById('thinkingIndicator').textContent = state.thinkingEnabled ? '🧠 심층사고 켜짐' : '🧠 심층사고 꺼짐';
-            document.getElementById('thinkingIndicator').classList.toggle('active', state.thinkingEnabled);
-            document.getElementById('searchIndicator').textContent = state.searchEnabled ? '🔍 웹검색 켜짐' : '🔍 웹검색 꺼짐';
-            document.getElementById('searchIndicator').classList.toggle('active', state.searchEnabled);
+    function toast(msg, type='info') {
+      const div = document.createElement('div');
+      div.className = 'toast';
+      div.style.borderColor = type==='error'? 'rgba(239,68,68,0.6)' : varAccentBorder();
+      div.textContent = msg;
+      document.body.appendChild(div);
+      setTimeout(() => div.remove(), 2200);
+    }
+    function varAccentBorder() { return 'rgba(56,189,248,0.4)'; }
 
-            updateUsage();
-        }
-
-        function updateUsage() {
-            const usagePercent = Math.min((state.totalTokens / 45000000) * 100, 100);
-            document.getElementById('usageBar').style.width = usagePercent + '%';
-            document.getElementById('usageTokens').textContent = formatTokens(state.totalTokens);
-            document.getElementById('usageCost').textContent = state.totalCost.toFixed(2);
-        }
-
-        function formatTokens(n) {
-            if (n >= 1000000) return (n / 1000000).toFixed(2) + 'M';
-            if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-            return n.toString();
-        }
-
-        function setupInput() {
-            const input = document.getElementById('messageInput');
-            const sendBtn = document.getElementById('sendBtn');
-            const charCount = document.getElementById('charCount');
-
-            input.addEventListener('input', () => {
-                charCount.textContent = input.value.length;
-                sendBtn.disabled = !input.value.trim() || state.isLoading;
-                input.style.height = 'auto';
-                input.style.height = Math.min(input.scrollHeight, 200) + 'px';
-            });
-
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    if (!sendBtn.disabled) sendMessage();
-                }
-            });
-        }
-
-        // 모델 선택
-        function toggleModelDropdown() {
-            document.getElementById('modelDropdown').classList.toggle('show');
-        }
-
-        document.querySelectorAll('.model-option').forEach(opt => {
-            opt.addEventListener('click', () => {
-                document.querySelectorAll('.model-option').forEach(o => o.classList.remove('selected'));
-                opt.classList.add('selected');
-                state.model = opt.dataset.model;
-                state.modelName = opt.querySelector('.model-name').textContent;
-                updateUI();
-                saveState();
-                document.getElementById('modelDropdown').classList.remove('show');
-            });
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.model-selector')) {
-                document.getElementById('modelDropdown').classList.remove('show');
-            }
-        });
-
-        // 토글 기능
-        function toggleThinking() {
-            state.thinkingEnabled = !state.thinkingEnabled;
-            updateUI();
-            saveState();
-        }
-
-        function toggleSearch() {
-            state.searchEnabled = !state.searchEnabled;
-            updateUI();
-            saveState();
-        }
-
-        function toggleResearch() {
-            state.researchEnabled = !state.researchEnabled;
-            if (state.researchEnabled) {
-                state.searchEnabled = true; // 딥리서치는 웹검색 필요
-            }
-            updateUI();
-            saveState();
-        }
-
-        // API 키
-        function toggleApiKey() {
-            const input = document.getElementById('apiKey');
-            input.type = input.type === 'password' ? 'text' : 'password';
-        }
-
-        function saveApiKey() {
-            const key = document.getElementById('apiKey').value.trim();
-            if (key) {
-                localStorage.setItem('claude_api_key', key);
-                toast('API 키가 저장되었습니다', 'success');
-            }
-        }
-
-        // 대화 관리
-        function newChat() {
-            const id = Date.now().toString();
-            state.conversations[id] = {
-                id, title: '새 대화', messages: [], createdAt: new Date().toISOString()
-            };
-            state.currentId = id;
-            saveState();
-            clearMessages();
-            renderHistory();
-        }
-
-        function loadChat(id) {
-            state.currentId = id;
-            clearMessages();
-            const conv = state.conversations[id];
-            if (conv) {
-                conv.messages.forEach(m => addMessage(m.role, m.content, m.thinking));
-            }
-            renderHistory();
-        }
-
-        function deleteChat(id, e) {
-            e.stopPropagation();
-            delete state.conversations[id];
-            if (state.currentId === id) {
-                state.currentId = null;
-                clearMessages();
-            }
-            saveState();
-            renderHistory();
-        }
-
-        function renderHistory() {
-            const list = document.getElementById('historyList');
-            list.innerHTML = '';
-            Object.keys(state.conversations).sort((a, b) => b - a).forEach(id => {
-                const conv = state.conversations[id];
-                const div = document.createElement('div');
-                div.className = 'history-item' + (id === state.currentId ? ' active' : '');
-                div.innerHTML = `
-                    <span>${escapeHtml(conv.title).substring(0, 25)}${conv.title.length > 25 ? '...' : ''}</span>
-                    <button class="delete-btn" onclick="deleteChat('${id}', event)">×</button>
-                `;
-                div.onclick = () => loadChat(id);
-                list.appendChild(div);
-            });
-        }
-
-        function clearMessages() {
-            document.querySelector('.messages-inner').innerHTML = `
-                <div class="welcome">
-                    <div class="welcome-icon">C</div>
-                    <h1>Claude에 오신 것을 환영합니다</h1>
-                    <p>무엇이든 물어보세요. 도움을 드릴 준비가 되어있습니다.</p>
-                    <div class="welcome-features">
-                        <div class="feature-card">
-                            <div class="feature-icon">🧠</div>
-                            <div class="feature-title">심층 사고</div>
-                            <div class="feature-desc">복잡한 문제를 단계별로 분석</div>
-                        </div>
-                        <div class="feature-card">
-                            <div class="feature-icon">🔍</div>
-                            <div class="feature-title">웹 검색</div>
-                            <div class="feature-desc">실시간 정보 검색</div>
-                        </div>
-                        <div class="feature-card">
-                            <div class="feature-icon">📚</div>
-                            <div class="feature-title">딥 리서치</div>
-                            <div class="feature-desc">깊이있는 조사와 분석</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function addMessage(role, content, thinking = null) {
-            const welcome = document.querySelector('.welcome');
-            if (welcome) welcome.remove();
-
-            const container = document.querySelector('.messages-inner');
-            const div = document.createElement('div');
-            div.className = `message ${role}`;
-
-            let thinkingHtml = '';
-            if (thinking) {
-                thinkingHtml = `
-                    <div class="thinking-block">
-                        <div class="thinking-header" onclick="this.nextElementSibling.classList.toggle('show')">
-                            <span class="thinking-title">🧠 심층 사고 과정</span>
-                            <span>▼</span>
-                        </div>
-                        <div class="thinking-content">${escapeHtml(thinking)}</div>
-                    </div>
-                `;
-            }
-
-            div.innerHTML = `
-                <div class="message-avatar">${role === 'user' ? '👤' : 'C'}</div>
-                <div class="message-content">
-                    ${thinkingHtml}
-                    <div class="message-bubble">${role === 'assistant' ? formatMd(content) : escapeHtml(content)}</div>
-                </div>
-            `;
-
-            container.appendChild(div);
-            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
-
-            if (role === 'assistant') addCopyBtns(div);
-            return div;
-        }
-
-        function updateMessage(div, content, thinking = null) {
-            let thinkingHtml = '';
-            if (thinking) {
-                thinkingHtml = `
-                    <div class="thinking-block">
-                        <div class="thinking-header" onclick="this.nextElementSibling.classList.toggle('show')">
-                            <span class="thinking-title">🧠 심층 사고 과정</span>
-                            <span>▼</span>
-                        </div>
-                        <div class="thinking-content">${escapeHtml(thinking)}</div>
-                    </div>
-                `;
-            }
-            div.querySelector('.message-content').innerHTML = `
-                ${thinkingHtml}
-                <div class="message-bubble">${formatMd(content)}</div>
-            `;
-            addCopyBtns(div);
-            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
-        }
-
-        function formatMd(text) {
-            if (typeof marked !== 'undefined') {
-                marked.setOptions({ breaks: true, gfm: true });
-                return marked.parse(text);
-            }
-            return escapeHtml(text).replace(/\n/g, '<br>');
-        }
-
-        function addCopyBtns(div) {
-            div.querySelectorAll('pre').forEach(pre => {
-                if (!pre.querySelector('.copy-code-btn')) {
-                    const btn = document.createElement('button');
-                    btn.className = 'copy-code-btn';
-                    btn.textContent = '복사';
-                    btn.onclick = () => {
-                        navigator.clipboard.writeText(pre.textContent.replace('복사', ''));
-                        btn.textContent = '복사됨!';
-                        setTimeout(() => btn.textContent = '복사', 2000);
-                    };
-                    pre.appendChild(btn);
-                }
-            });
-        }
-
-        // 메시지 전송
-        async function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const content = input.value.trim();
-            if (!content || state.isLoading) return;
-
-            const apiKey = document.getElementById('apiKey').value.trim();
-            if (!apiKey) {
-                toast('API 키를 입력해주세요', 'error');
-                return;
-            }
-
-            if (!state.currentId) newChat();
-
-            addMessage('user', content);
-            state.conversations[state.currentId].messages.push({ role: 'user', content });
-
-            if (state.conversations[state.currentId].messages.length === 1) {
-                const title = content.substring(0, 30) + (content.length > 30 ? '...' : '');
-                state.conversations[state.currentId].title = title;
-            }
-
-            saveState();
-            renderHistory();
-            input.value = '';
-            input.style.height = 'auto';
-            document.getElementById('charCount').textContent = '0';
-            document.getElementById('sendBtn').disabled = true;
-
-            await callAPI(apiKey, content);
-        }
-
-        async function callAPI(apiKey, userMessage) {
-            state.isLoading = true;
-
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'message assistant';
-            typingDiv.innerHTML = `
-                <div class="message-avatar">C</div>
-                <div class="message-content">
-                    <div class="message-bubble">
-                        <div class="typing-indicator"><span></span><span></span><span></span></div>
-                    </div>
-                </div>
-            `;
-            document.querySelector('.messages-inner').appendChild(typingDiv);
-            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
-
-            try {
-                const msgs = state.conversations[state.currentId].messages.map(m => ({
-                    role: m.role, content: m.content
-                }));
-
-                const res = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        apiKey,
-                        messages: msgs,
-                        model: state.model,
-                        thinking: state.thinkingEnabled,
-                        search: state.searchEnabled,
-                        research: state.researchEnabled
-                    })
-                });
-
-                typingDiv.remove();
-
-                if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.error?.message || err.error || 'API 오류');
-                }
-
-                const data = await res.json();
-
-                // 사용량 업데이트
-                if (data.usage) {
-                    const price = pricing[state.model] || pricing['claude-opus-4-5-20250514'];
-                    const inputCost = (data.usage.input_tokens / 1000000) * price.input;
-                    const outputCost = (data.usage.output_tokens / 1000000) * price.output;
-                    state.totalTokens += data.usage.input_tokens + data.usage.output_tokens;
-                    state.totalCost += inputCost + outputCost;
-                    updateUsage();
-                }
-
-                // 응답 표시
-                let content = '';
-                let thinking = null;
-
-                if (data.content) {
-                    data.content.forEach(block => {
-                        if (block.type === 'thinking') {
-                            thinking = block.thinking;
-                        } else if (block.type === 'text') {
-                            content += block.text;
-                        }
-                    });
-                }
-
-                // 웹검색 결과 표시
-                if (data.searchResults) {
-                    let searchHtml = '<div class="search-results"><div class="search-header">🔍 웹 검색 결과</div>';
-                    data.searchResults.forEach(r => {
-                        searchHtml += `
-                            <div class="search-item">
-                                <a href="${r.url}" target="_blank" class="search-item-title">${escapeHtml(r.title)}</a>
-                                <div class="search-item-url">${r.url}</div>
-                            </div>
-                        `;
-                    });
-                    searchHtml += '</div>';
-                    content = searchHtml + content;
-                }
-
-                addMessage('assistant', content, thinking);
-                state.conversations[state.currentId].messages.push({
-                    role: 'assistant', content, thinking
-                });
-                saveState();
-
-            } catch (error) {
-                typingDiv.remove();
-                toast(error.message, 'error');
-                addMessage('assistant', `오류가 발생했습니다: ${error.message}`);
-            } finally {
-                state.isLoading = false;
-                document.getElementById('sendBtn').disabled = !document.getElementById('messageInput').value.trim();
-            }
-        }
-
-        // 내보내기
-        function exportChat() {
-            if (!state.currentId || !state.conversations[state.currentId]) {
-                toast('내보낼 대화가 없습니다', 'error');
-                return;
-            }
-            const conv = state.conversations[state.currentId];
-            let md = `# ${conv.title}\n\n`;
-            conv.messages.forEach(m => {
-                md += `## ${m.role === 'user' ? '사용자' : 'Claude'}\n\n${m.content}\n\n---\n\n`;
-            });
-            const blob = new Blob([md], { type: 'text/markdown' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `${conv.title}.md`;
-            a.click();
-            toast('대화가 내보내졌습니다', 'success');
-        }
-
-        // 플랜 모달
-        function showPlanModal() {
-            document.getElementById('planModal').classList.add('show');
-        }
-
-        function closePlanModal() {
-            document.getElementById('planModal').classList.remove('show');
-        }
-
-        function subscribePlan() {
-            toast('결제 시스템은 준비 중입니다', 'warning');
-        }
-
-        // 유틸리티
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function toast(msg, type) {
-            const div = document.createElement('div');
-            div.className = `toast ${type}`;
-            div.textContent = msg;
-            document.body.appendChild(div);
-            setTimeout(() => div.remove(), 3000);
-        }
-    </script>
+    init();
+  </script>
 </body>
 </html>
